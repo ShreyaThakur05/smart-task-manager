@@ -32,12 +32,16 @@ export default function TableView() {
   }
 
   const sortedTasks = [...tasks].sort((a, b) => {
-    let aValue = a[sortField as keyof typeof a]
-    let bValue = b[sortField as keyof typeof b]
+    let aValue: any = a[sortField as keyof typeof a]
+    let bValue: any = b[sortField as keyof typeof b]
     
     if (sortField === 'dueDate') {
       aValue = aValue ? new Date(aValue as string).getTime() : 0
       bValue = bValue ? new Date(bValue as string).getTime() : 0
+    }
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
     }
     
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
