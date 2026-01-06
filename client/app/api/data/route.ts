@@ -50,28 +50,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    try {
-      const mongoClient = await connectToDatabase()
-      const db = mongoClient.db('taskmanagement')
-      const tasks = await db.collection('tasks').find({ userId }).toArray()
-      const lists = await db.collection('lists').find({ userId }).toArray()
-      
-      return NextResponse.json({ tasks, lists })
-    } catch (dbError) {
-      console.error('Database connection failed, returning defaults:', dbError)
-      // Return default lists for fallback
-      return NextResponse.json({ 
-        tasks: [], 
-        lists: [
-          { id: 'backlog', title: 'Backlog', userId },
-          { id: 'in-progress', title: 'In Progress', userId },
-          { id: 'review', title: 'Review', userId },
-          { id: 'done', title: 'Done', userId }
-        ]
-      })
-    }
+    const mongoClient = await connectToDatabase()
+    const db = mongoClient.db('taskmanagement')
+    const tasks = await db.collection('tasks').find({ userId }).toArray()
+    const lists = await db.collection('lists').find({ userId }).toArray()
+    
+    return NextResponse.json({ tasks, lists })
   } catch (error) {
-    console.error('API error:', error)
+    console.error('Database error:', error)
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
   }
 }
@@ -84,27 +70,20 @@ export async function POST(request: NextRequest) {
     }
 
     const { type, data } = await request.json()
+    const mongoClient = await connectToDatabase()
+    const db = mongoClient.db('taskmanagement')
     
-    try {
-      const mongoClient = await connectToDatabase()
-      const db = mongoClient.db('taskmanagement')
-      
-      const dataWithUser = { ...data, userId }
-      
-      if (type === 'task') {
-        await db.collection('tasks').insertOne(dataWithUser)
-      } else if (type === 'list') {
-        await db.collection('lists').insertOne(dataWithUser)
-      }
-      
-      return NextResponse.json({ success: true })
-    } catch (dbError) {
-      console.error('Database operation failed, returning success for fallback:', dbError)
-      // Return success even if DB fails (client will handle locally)
-      return NextResponse.json({ success: true })
+    const dataWithUser = { ...data, userId }
+    
+    if (type === 'task') {
+      await db.collection('tasks').insertOne(dataWithUser)
+    } else if (type === 'list') {
+      await db.collection('lists').insertOne(dataWithUser)
     }
+    
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('API error:', error)
+    console.error('Database error:', error)
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 })
   }
 }

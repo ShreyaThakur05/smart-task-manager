@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { subscribeWithSelector, persist } from 'zustand/middleware'
+import { subscribeWithSelector } from 'zustand/middleware'
 import { useAuthStore } from './authStore'
 
 interface Task {
@@ -57,13 +57,12 @@ const apiCall = async (url: string, options: RequestInit = {}) => {
 }
 
 export const useTaskStore = create<TaskState>()(
-  persist(
-    subscribeWithSelector((set, get) => ({
-      tasks: [],
-      lists: [],
-      filter: { search: '' },
-      view: 'board',
-      selectedTask: null,
+  subscribeWithSelector((set, get) => ({
+    tasks: [],
+    lists: [],
+    filter: { search: '' },
+    view: 'board',
+    selectedTask: null,
 
     addTask: async (taskData) => {
       const newTask: Task = {
@@ -73,23 +72,23 @@ export const useTaskStore = create<TaskState>()(
         updatedAt: new Date().toISOString()
       }
       
+      // Add to local state immediately for UI responsiveness
+      set(state => ({ tasks: [...state.tasks, newTask] }))
+      
+      // Always try to sync to server
       try {
         const response = await apiCall('/api/data', {
           method: 'POST',
           body: JSON.stringify({ type: 'task', data: newTask })
         })
         
-        if (response.ok) {
-          set(state => ({ tasks: [...state.tasks, newTask] }))
-        } else {
-          // Fallback: add to local state even if API fails
-          console.warn('API call failed, adding task locally')
-          set(state => ({ tasks: [...state.tasks, newTask] }))
+        if (!response.ok) {
+          console.error('Failed to sync task to server')
+          // Could implement retry logic here
         }
       } catch (error) {
-        console.error('Failed to add task via API, adding locally:', error)
-        // Fallback: add to local state
-        set(state => ({ tasks: [...state.tasks, newTask] }))
+        console.error('Failed to sync task to server:', error)
+        // Could implement retry logic here
       }
     },
 
@@ -184,49 +183,24 @@ export const useTaskStore = create<TaskState>()(
     },
 
     loadData: async () => {
-      const currentState = get()
-      
       try {
         const response = await apiCall('/api/data')
         if (response.ok) {
           const serverData = await response.json()
-          // Merge server data with local data, preferring newer items
-          const mergedTasks = [...(serverData.tasks || []), ...currentState.tasks]
-            .reduce((acc: Task[], task: Task) => {
-              const existing = acc.find((t: Task) => t.id === task.id)
-              if (!existing || (task.updatedAt && existing.updatedAt && new Date(task.updatedAt) > new Date(existing.updatedAt))) {
-                return [...acc.filter((t: Task) => t.id !== task.id), task]
-              }
-              return acc
-            }, [])
-          
-          const mergedLists = [...(serverData.lists || []), ...currentState.lists]
-            .reduce((acc: { id: string; title: string }[], list: { id: string; title: string }) => {
-              if (!acc.find((l: { id: string; title: string }) => l.id === list.id)) {
-                return [...acc, list]
-              }
-              return acc
-            }, [])
-          
-          set({ tasks: mergedTasks, lists: mergedLists })
-        } else {
-          // Use existing local data or defaults
-          if (currentState.lists.length === 0) {
-            set({ 
-              lists: [
-                { id: 'backlog', title: 'Backlog' },
-                { id: 'in-progress', title: 'In Progress' },
-                { id: 'review', title: 'Review' },
-                { id: 'done', title: 'Done' }
-              ]
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load data, using local/defaults:', error)
-        // Use existing local data or set defaults
-        if (currentState.lists.length === 0) {
+          // Always use server data as the source of truth
           set({ 
+            tasks: serverData.tasks || [], 
+            lists: serverData.lists || [
+              { id: 'backlog', title: 'Backlog' },
+              { id: 'in-progress', title: 'In Progress' },
+              { id: 'review', title: 'Review' },
+              { id: 'done', title: 'Done' }
+            ]
+          })
+        } else {
+          // Only use defaults if server fails
+          set({ 
+            tasks: [],
             lists: [
               { id: 'backlog', title: 'Backlog' },
               { id: 'in-progress', title: 'In Progress' },
@@ -235,6 +209,18 @@ export const useTaskStore = create<TaskState>()(
             ]
           })
         }
+      } catch (error) {
+        console.error('Failed to load data from server:', error)
+        // Only use defaults if server fails
+        set({ 
+          tasks: [],
+          lists: [
+            { id: 'backlog', title: 'Backlog' },
+            { id: 'in-progress', title: 'In Progress' },
+            { id: 'review', title: 'Review' },
+            { id: 'done', title: 'Done' }
+          ]
+        })
       }
     },
 
@@ -287,14 +273,5 @@ export const useTaskStore = create<TaskState>()(
         return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
       })
     }
-  })),
-  {
-    name: 'task-store',
-    partialize: (state) => ({
-      tasks: state.tasks,
-      lists: state.lists,
-      view: state.view
-    })
-  }
-)
+  }))
 )
