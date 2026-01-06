@@ -43,14 +43,7 @@ async function connectToDatabase() {
   } catch (error) {
     console.error('MongoDB connection failed:', error)
     cachedClient = null
-    
-    // For testing purposes, create a test user if connection fails
-    if (error instanceof Error && error.message.includes('ENOTFOUND')) {
-      console.log('Using fallback authentication for testing')
-      throw new Error('FALLBACK_MODE')
-    }
-    
-    throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw error
   }
 }
 
