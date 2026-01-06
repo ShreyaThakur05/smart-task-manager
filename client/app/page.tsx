@@ -29,7 +29,9 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true)
-    // loadData() // Disabled for localStorage version
+    if (user) {
+      loadData() // Load data from MongoDB when user is authenticated
+    }
     
     // Global keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,7 +43,7 @@ export default function Home() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [user, loadData])
 
   const handleQuickAdd = () => {
     if (!quickTaskTitle.trim()) return

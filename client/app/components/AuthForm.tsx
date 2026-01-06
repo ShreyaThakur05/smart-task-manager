@@ -19,12 +19,25 @@ export default function AuthForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    
+    // Client-side validation
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    
     setIsLoading(true)
     
     try {
-      await login(email, password)
-    } catch (err) {
-      setError('Invalid credentials')
+      await login(email.trim().toLowerCase(), password)
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError(err.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -33,13 +46,35 @@ export default function AuthForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    
+    // Client-side validation
+    if (!name || !email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
+    
+    if (name.trim().length < 2) {
+      setError('Name must be at least 2 characters')
+      return
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    
     setIsLoading(true)
     
     try {
-      await register(email, password, name)
+      await register(email.trim().toLowerCase(), password, name.trim())
     } catch (err: any) {
       console.error('Registration error:', err)
-      setError(err.message || 'Registration failed')
+      setError(err.message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

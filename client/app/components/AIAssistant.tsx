@@ -67,6 +67,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     
     const parseTaskSimple = (text: string) => {
       const lowercaseText = text.toLowerCase()
+      const allLists = lists // Move this declaration to the top
       
       // Extract task title (look for key phrases)
       let title = text
@@ -104,7 +105,6 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       let status: 'backlog' | 'in-progress' | 'review' | 'done' = 'backlog'
       
       // Check for specific list mentions (including user-created lists)
-      const allLists = lists
       let matchedListId = 'backlog' // default
       
       for (const list of allLists) {
