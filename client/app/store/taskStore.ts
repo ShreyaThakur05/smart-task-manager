@@ -192,21 +192,21 @@ export const useTaskStore = create<TaskState>()(
           const serverData = await response.json()
           // Merge server data with local data, preferring newer items
           const mergedTasks = [...(serverData.tasks || []), ...currentState.tasks]
-            .reduce((acc, task) => {
-              const existing = acc.find(t => t.id === task.id)
-              if (!existing || new Date(task.updatedAt) > new Date(existing.updatedAt)) {
-                return [...acc.filter(t => t.id !== task.id), task]
+            .reduce((acc: Task[], task: Task) => {
+              const existing = acc.find((t: Task) => t.id === task.id)
+              if (!existing || (task.updatedAt && existing.updatedAt && new Date(task.updatedAt) > new Date(existing.updatedAt))) {
+                return [...acc.filter((t: Task) => t.id !== task.id), task]
               }
               return acc
-            }, [] as Task[])
+            }, [])
           
           const mergedLists = [...(serverData.lists || []), ...currentState.lists]
-            .reduce((acc, list) => {
-              if (!acc.find(l => l.id === list.id)) {
+            .reduce((acc: { id: string; title: string }[], list: { id: string; title: string }) => {
+              if (!acc.find((l: { id: string; title: string }) => l.id === list.id)) {
                 return [...acc, list]
               }
               return acc
-            }, [] as { id: string; title: string }[])
+            }, [])
           
           set({ tasks: mergedTasks, lists: mergedLists })
         } else {
