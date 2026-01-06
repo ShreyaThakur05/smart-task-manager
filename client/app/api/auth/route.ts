@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       if (email === 'shreya_list' && password === 'test123') {
         console.log('Test user login - checking/creating in database')
         
-        let user = await users.findOne({ email: 'shreya_list' })
+        let user: any = await users.findOne({ email: 'shreya_list' })
         
         if (!user) {
           // Create test user in database
