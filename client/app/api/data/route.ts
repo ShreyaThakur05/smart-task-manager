@@ -10,7 +10,14 @@ async function connectToDatabase() {
   }
 
   if (client) {
-    return client
+    try {
+      // Test if client is still connected
+      await client.db('admin').command({ ping: 1 })
+      return client
+    } catch (error) {
+      // Client is disconnected, create new one
+      client = null
+    }
   }
 
   try {

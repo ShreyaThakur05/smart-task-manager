@@ -11,8 +11,15 @@ async function connectToDatabase() {
     throw new Error('MONGODB_URI is not defined in environment variables')
   }
 
-  if (cachedClient && cachedClient.topology && cachedClient.topology.isConnected()) {
-    return cachedClient
+  if (cachedClient) {
+    try {
+      // Check if client is still connected
+      await cachedClient.db('admin').command({ ping: 1 })
+      return cachedClient
+    } catch (error) {
+      // Client is disconnected, create new one
+      cachedClient = null
+    }
   }
 
   try {
