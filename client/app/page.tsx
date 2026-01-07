@@ -183,18 +183,25 @@ export default function Home() {
       </header>
 
       {/* Secondary Navigation */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm font-medium rounded-full">
-              {filteredTasks.length} tasks
-            </span>
-            <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm font-medium rounded-full">
-              {tasksByStatus.done.length} completed
-            </span>
+          {/* Stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                {filteredTasks.length} tasks
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                {tasksByStatus.done.length} completed
+              </span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* View Switcher */}
             <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               {[
@@ -206,36 +213,41 @@ export default function Home() {
                 <button
                   key={key}
                   onClick={() => setView(key as any)}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                     view === key
                       ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{label}</span>
                 </button>
-              ))}            </div>
+              ))}
+            </div>
             
-
+            {/* Theme Toggle */}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             
-            <ThemeToggle />
-            
-            <button
-              onClick={() => setShowTaskModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl font-semibold"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="text-sm">New Task</span>
-            </button>
-            
-            <button
-              onClick={() => setShowAIAssistant(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-colors"
-            >
-              <Bot className="w-4 h-4" />
-              <span className="text-sm font-medium">AI Create</span>
-            </button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowTaskModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg font-medium text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Task</span>
+              </button>
+              
+              <button
+                onClick={() => setShowAIAssistant(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg font-medium text-sm"
+              >
+                <Bot className="w-4 h-4" />
+                <span>AI Create</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
