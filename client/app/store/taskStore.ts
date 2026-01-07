@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { subscribeWithSelector } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 import { useAuthStore } from './authStore'
 
 interface Task {
@@ -44,20 +44,7 @@ interface TaskState {
   getFilteredTasks: () => Task[]
 }
 
-const apiCall = async (url: string, options: RequestInit = {}) => {
-  const token = useAuthStore.getState().token
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers
-    }
-  })
-}
-
-export const useTaskStore = create<TaskState>()(
-  subscribeWithSelector((set, get) => ({
+export const useTaskStore = create<TaskState>()(persist((set, get) => ({
     tasks: [],
     lists: [],
     filter: { search: '' },
@@ -72,24 +59,7 @@ export const useTaskStore = create<TaskState>()(
         updatedAt: new Date().toISOString()
       }
       
-      // Add to local state immediately for UI responsiveness
       set(state => ({ tasks: [...state.tasks, newTask] }))
-      
-      // Always try to sync to server
-      try {
-        const response = await apiCall('/api/data', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'task', data: newTask })
-        })
-        
-        if (!response.ok) {
-          console.error('Failed to sync task to server')
-          // Could implement retry logic here
-        }
-      } catch (error) {
-        console.error('Failed to sync task to server:', error)
-        // Could implement retry logic here
-      }
     },
 
     addList: async (title) => {
@@ -98,122 +68,34 @@ export const useTaskStore = create<TaskState>()(
         title
       }
       
-      // Add locally first
       set(state => ({ lists: [...state.lists, newList] }))
-      
-      // Try to sync to server
-      try {
-        const response = await apiCall('/api/data', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'list', data: newList })
-        })
-        
-        if (!response.ok) {
-          console.warn('Failed to sync list creation to server')
-        }
-      } catch (error) {
-        console.warn('Failed to sync list creation to server:', error)
-      }
     },
 
     deleteList: async (id) => {
-      // Delete locally first
       set(state => ({ lists: state.lists.filter(list => list.id !== id) }))
-      
-      // Try to sync to server
-      try {
-        const response = await apiCall('/api/data', {
-          method: 'DELETE',
-          body: JSON.stringify({ type: 'list', id })
-        })
-        
-        if (!response.ok) {
-          console.warn('Failed to sync list deletion to server')
-        }
-      } catch (error) {
-        console.warn('Failed to sync list deletion to server:', error)
-      }
     },
 
     updateTask: async (id, updates) => {
       const updatedTask = { ...updates, updatedAt: new Date().toISOString() }
       
-      // Update locally first
       set(state => ({
         tasks: state.tasks.map(task =>
           task.id === id ? { ...task, ...updatedTask } : task
         )
       }))
-      
-      // Try to sync to server
-      try {
-        const response = await apiCall('/api/data', {
-          method: 'PUT',
-          body: JSON.stringify({ type: 'task', id, data: updatedTask })
-        })
-        
-        if (!response.ok) {
-          console.warn('Failed to sync task update to server')
-        }
-      } catch (error) {
-        console.warn('Failed to sync task update to server:', error)
-      }
     },
 
     deleteTask: async (id) => {
-      // Delete locally first
       set(state => ({
         tasks: state.tasks.filter(task => task.id !== id),
         selectedTask: state.selectedTask?.id === id ? null : state.selectedTask
       }))
-      
-      // Try to sync to server
-      try {
-        const response = await apiCall('/api/data', {
-          method: 'DELETE',
-          body: JSON.stringify({ type: 'task', id })
-        })
-        
-        if (!response.ok) {
-          console.warn('Failed to sync task deletion to server')
-        }
-      } catch (error) {
-        console.warn('Failed to sync task deletion to server:', error)
-      }
     },
 
     loadData: async () => {
-      try {
-        const response = await apiCall('/api/data')
-        if (response.ok) {
-          const serverData = await response.json()
-          // Always use server data as the source of truth
-          set({ 
-            tasks: serverData.tasks || [], 
-            lists: serverData.lists || [
-              { id: 'backlog', title: 'Backlog' },
-              { id: 'in-progress', title: 'In Progress' },
-              { id: 'review', title: 'Review' },
-              { id: 'done', title: 'Done' }
-            ]
-          })
-        } else {
-          // Only use defaults if server fails
-          set({ 
-            tasks: [],
-            lists: [
-              { id: 'backlog', title: 'Backlog' },
-              { id: 'in-progress', title: 'In Progress' },
-              { id: 'review', title: 'Review' },
-              { id: 'done', title: 'Done' }
-            ]
-          })
-        }
-      } catch (error) {
-        console.error('Failed to load data from server:', error)
-        // Only use defaults if server fails
+      const { lists } = get()
+      if (lists.length === 0) {
         set({ 
-          tasks: [],
           lists: [
             { id: 'backlog', title: 'Backlog' },
             { id: 'in-progress', title: 'In Progress' },
@@ -246,10 +128,8 @@ export const useTaskStore = create<TaskState>()(
         )
       }))
       
-      // Try to update via API (but don't fail if it doesn't work)
-      get().updateTask(id, updates).catch(error => {
-        console.warn('Failed to sync move to server:', error)
-      })
+      // Update task with new position
+      get().updateTask(id, updates)
     },
 
     setFilter: (newFilter) => {
@@ -273,5 +153,8 @@ export const useTaskStore = create<TaskState>()(
         return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
       })
     }
-  }))
+  })), {
+    name: 'task-store',
+    partialize: (state) => ({ tasks: state.tasks, lists: state.lists })
+  })
 )
