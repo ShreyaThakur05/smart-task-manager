@@ -53,6 +53,13 @@ export const useAuthStore = create<AuthState>()(persist(
     logout: () => set({ user: null, token: null })
   }),
   {
-    name: 'auth-store'
+    name: 'auth-store',
+    onRehydrateStorage: () => (state, action) => {
+      // Triggered when hydration completes
+      if (state && state.token) {
+        // Token was restored from storage
+        console.log('Auth state rehydrated from storage')
+      }
+    }
   }
 ))

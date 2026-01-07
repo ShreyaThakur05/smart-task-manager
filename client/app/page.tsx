@@ -2,6 +2,7 @@
 
 import { useTaskStore } from './store/taskStore'
 import { useAuthStore } from './store/authStore'
+import { useHydration } from './hooks/useHydration'
 import AuthForm from './components/AuthForm'
 import Board from './components/Board'
 import TableView from './components/TableView'
@@ -16,6 +17,7 @@ import { Search, Filter, Plus, Bell, MoreHorizontal, LayoutGrid, List, Calendar,
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Home() {
+  const isHydrated = useHydration()
   const { user, logout } = useAuthStore()
   const { tasks, lists, view, setView, selectedTask, setSelectedTask, filter, setFilter, getFilteredTasks, addTask, addList, moveTask, loadData } = useTaskStore()
   const [mounted, setMounted] = useState(false)
@@ -24,13 +26,20 @@ export default function Home() {
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [quickTaskTitle, setQuickTaskTitle] = useState('')
 
+  // First effect: mount and rehydrate from storage
   useEffect(() => {
     setMounted(true)
-    if (user) {
+  }, [])
+
+  // Second effect: load data only after component is mounted, hydrated, and user is available
+  useEffect(() => {
+    if (isHydrated && mounted && user) {
       loadData() // Load data from MongoDB when user is authenticated
     }
-    
-    // Global keyboard shortcuts
+  }, [isHydrated, mounted, user, loadData])
+
+  // Third effect: global keyboard shortcuts
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault()
@@ -40,7 +49,7 @@ export default function Home() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [user, loadData])
+  }, [])
 
   const handleQuickAdd = () => {
     if (!quickTaskTitle.trim()) return
@@ -88,7 +97,7 @@ export default function Home() {
     })
   }
 
-  if (!mounted) {
+  if (!isHydrated || !mounted) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="flex items-center gap-3">

@@ -45,15 +45,29 @@ interface TaskState {
 }
 
 const apiCall = async (url: string, options: RequestInit = {}) => {
-  const token = useAuthStore.getState().token
-  return fetch(url, {
+  const authState = useAuthStore.getState()
+  const token = authState.token
+
+  if (!token) {
+    throw new Error('No authentication token available. Please login first.')
+  }
+
+  const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`,
       ...options.headers
     }
   })
+
+  // If 401, token might be invalid
+  if (response.status === 401) {
+    useAuthStore.getState().logout()
+    throw new Error('Authentication failed. Please login again.')
+  }
+
+  return response
 }
 
 export const useTaskStore = create<TaskState>()(
