@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { useAuthStore } from './authStore'
 
 interface Task {
   id: string
