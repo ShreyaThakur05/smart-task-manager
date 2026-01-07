@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
 // Create transporter with Gmail SMTP
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
