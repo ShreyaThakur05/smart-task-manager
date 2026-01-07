@@ -1,43 +1,10 @@
-import { MongoClient } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import clientPromise from '../../lib/mongodb'
 
-let client: MongoClient | null = null
-
-async function connectToDatabase() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error('Please add your Mongo URI to .env.local')
-  }
-
-  if (client) {
-    try {
-      // Test if client is still connected
-      await client.db('admin').command({ ping: 1 })
-      return client
-    } catch (error) {
-      // Client is disconnected, create new one
-      client = null
-    }
-  }
-
+const verifyToken = (token: string) => {
   try {
-    client = new MongoClient(process.env.MONGODB_URI)
-    await client.connect()
-    return client
-  } catch (error) {
-    console.error('MongoDB connection error:', error)
-    client = null
-    throw error
-  }
-}
-
-function getUserFromToken(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token) return null
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any
-    return decoded.userId
+    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string, email: string }
   } catch {
     return null
   }
@@ -45,91 +12,66 @@ function getUserFromToken(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserFromToken(request)
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) {
+      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
     }
 
-    const mongoClient = await connectToDatabase()
-    const db = mongoClient.db('taskmanagement')
-    const tasks = await db.collection('tasks').find({ userId }).toArray()
-    const lists = await db.collection('lists').find({ userId }).toArray()
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    const client = await clientPromise
+    const db = client.db('taskmanagement')
     
-    return NextResponse.json({ tasks, lists })
+    const userData = await db.collection('userdata').findOne({ userId: decoded.userId })
+    
+    return NextResponse.json({
+      tasks: userData?.tasks || [],
+      lists: userData?.lists || [
+        { id: 'backlog', title: 'Backlog' },
+        { id: 'in-progress', title: 'In Progress' },
+        { id: 'review', title: 'Review' },
+        { id: 'done', title: 'Done' }
+      ]
+    })
   } catch (error) {
-    console.error('Database error:', error)
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to load data' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getUserFromToken(request)
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) {
+      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
     }
 
-    const { type, data } = await request.json()
-    const mongoClient = await connectToDatabase()
-    const db = mongoClient.db('taskmanagement')
-    
-    const dataWithUser = { ...data, userId }
-    
-    if (type === 'task') {
-      await db.collection('tasks').insertOne(dataWithUser)
-    } else if (type === 'list') {
-      await db.collection('lists').insertOne(dataWithUser)
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
+
+    const { tasks, lists } = await request.json()
+    
+    const client = await clientPromise
+    const db = client.db('taskmanagement')
+    
+    await db.collection('userdata').updateOne(
+      { userId: decoded.userId },
+      { 
+        $set: { 
+          tasks, 
+          lists,
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true }
+    )
     
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Database error:', error)
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 })
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const userId = getUserFromToken(request)
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { type, id, data } = await request.json()
-    const mongoClient = await connectToDatabase()
-    const db = mongoClient.db('taskmanagement')
-    
-    if (type === 'task') {
-      await db.collection('tasks').updateOne({ id, userId }, { $set: data })
-    }
-    
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Database error:', error)
-    return NextResponse.json({ error: 'Failed to update data' }, { status: 500 })
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const userId = getUserFromToken(request)
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { type, id } = await request.json()
-    const mongoClient = await connectToDatabase()
-    const db = mongoClient.db('taskmanagement')
-    
-    if (type === 'task') {
-      await db.collection('tasks').deleteOne({ id, userId })
-    } else if (type === 'list') {
-      await db.collection('lists').deleteOne({ id, userId })
-    }
-    
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Database error:', error)
-    return NextResponse.json({ error: 'Failed to delete data' }, { status: 500 })
   }
 }

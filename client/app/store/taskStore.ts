@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { useAuthStore } from './authStore'
 
 interface Task {
   id: string
@@ -36,6 +36,7 @@ interface TaskState {
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   loadData: () => Promise<void>
+  saveData: () => Promise<void>
   moveTask: (id: string, newListId: string) => void
   setFilter: (filter: Partial<TaskState['filter']>) => void
   setView: (view: TaskState['view']) => void
@@ -43,7 +44,19 @@ interface TaskState {
   getFilteredTasks: () => Task[]
 }
 
-export const useTaskStore = create<TaskState>()(persist(
+const apiCall = async (url: string, options: RequestInit = {}) => {
+  const token = useAuthStore.getState().token
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers
+    }
+  })
+}
+
+export const useTaskStore = create<TaskState>()(
   (set, get) => ({
     tasks: [],
     lists: [],
@@ -60,6 +73,7 @@ export const useTaskStore = create<TaskState>()(persist(
       }
       
       set(state => ({ tasks: [...state.tasks, newTask] }))
+      await get().saveData()
     },
 
     addList: async (title) => {
@@ -69,10 +83,12 @@ export const useTaskStore = create<TaskState>()(persist(
       }
       
       set(state => ({ lists: [...state.lists, newList] }))
+      await get().saveData()
     },
 
     deleteList: async (id) => {
       set(state => ({ lists: state.lists.filter(list => list.id !== id) }))
+      await get().saveData()
     },
 
     updateTask: async (id, updates) => {
@@ -83,6 +99,7 @@ export const useTaskStore = create<TaskState>()(persist(
           task.id === id ? { ...task, ...updatedTask } : task
         )
       }))
+      await get().saveData()
     },
 
     deleteTask: async (id) => {
@@ -90,11 +107,18 @@ export const useTaskStore = create<TaskState>()(persist(
         tasks: state.tasks.filter(task => task.id !== id),
         selectedTask: state.selectedTask?.id === id ? null : state.selectedTask
       }))
+      await get().saveData()
     },
 
     loadData: async () => {
-      const { lists } = get()
-      if (lists.length === 0) {
+      try {
+        const response = await apiCall('/api/data')
+        if (response.ok) {
+          const data = await response.json()
+          set({ tasks: data.tasks, lists: data.lists })
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error)
         set({ 
           lists: [
             { id: 'backlog', title: 'Backlog' },
@@ -103,6 +127,18 @@ export const useTaskStore = create<TaskState>()(persist(
             { id: 'done', title: 'Done' }
           ]
         })
+      }
+    },
+
+    saveData: async () => {
+      try {
+        const { tasks, lists } = get()
+        await apiCall('/api/data', {
+          method: 'POST',
+          body: JSON.stringify({ tasks, lists })
+        })
+      } catch (error) {
+        console.error('Failed to save data:', error)
       }
     },
 
@@ -151,9 +187,5 @@ export const useTaskStore = create<TaskState>()(persist(
         return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
       })
     }
-  }),
-  {
-    name: 'task-store',
-    partialize: (state) => ({ tasks: state.tasks, lists: state.lists })
-  }
-))
+  })
+)
