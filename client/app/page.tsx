@@ -24,9 +24,6 @@ export default function Home() {
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [quickTaskTitle, setQuickTaskTitle] = useState('')
 
-  console.log('Current lists:', lists)
-  console.log('addList function:', addList)
-
   useEffect(() => {
     setMounted(true)
     if (user) {

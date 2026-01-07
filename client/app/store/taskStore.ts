@@ -43,7 +43,8 @@ interface TaskState {
   getFilteredTasks: () => Task[]
 }
 
-export const useTaskStore = create<TaskState>()(persist((set, get) => ({
+export const useTaskStore = create<TaskState>()(persist(
+  (set, get) => ({
     tasks: [],
     lists: [],
     filter: { search: '' },
@@ -120,14 +121,12 @@ export const useTaskStore = create<TaskState>()(persist((set, get) => ({
         listId: newListId
       }
       
-      // Update locally first
       set(state => ({
         tasks: state.tasks.map(task =>
           task.id === id ? { ...task, ...updates, updatedAt: new Date().toISOString() } : task
         )
       }))
       
-      // Update task with new position
       get().updateTask(id, updates)
     },
 
@@ -152,8 +151,9 @@ export const useTaskStore = create<TaskState>()(persist((set, get) => ({
         return matchesSearch && matchesStatus && matchesPriority && matchesAssignee
       })
     }
-  })), {
+  }),
+  {
     name: 'task-store',
     partialize: (state) => ({ tasks: state.tasks, lists: state.lists })
-  })
-)
+  }
+))
