@@ -1,31 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
 import clientPromise from '../../lib/mongodb'
-
-const verifyToken = (token: string) => {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string, email: string }
-  } catch {
-    return null
-  }
-}
+import { getAuthUser } from '../../lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
-    }
-
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    const user = getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const client = await clientPromise
     const db = client.db('taskmanagement')
     
-    const userData = await db.collection('userdata').findOne({ userId: decoded.userId })
+    const userData = await db.collection('userdata').findOne({ userId: user.userId })
     
     return NextResponse.json({
       tasks: userData?.tasks || [],
@@ -37,29 +24,29 @@ export async function GET(request: NextRequest) {
       ]
     })
   } catch (error) {
+    console.error('Data load error:', error)
     return NextResponse.json({ error: 'Failed to load data' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 })
-    }
-
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    const user = getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { tasks, lists } = await request.json()
+    
+    if (!Array.isArray(tasks) || !Array.isArray(lists)) {
+      return NextResponse.json({ error: 'Invalid data format' }, { status: 400 })
+    }
     
     const client = await clientPromise
     const db = client.db('taskmanagement')
     
     await db.collection('userdata').updateOne(
-      { userId: decoded.userId },
+      { userId: user.userId },
       { 
         $set: { 
           tasks, 
@@ -72,6 +59,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Data save error:', error)
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 })
   }
 }
