@@ -23,27 +23,18 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
 
     setIsProcessing(true)
     
-    // Enhanced AI parsing with Gemini API
+    // Enhanced AI parsing with server-side API
     const parseTask = async (text: string) => {
-      // Fallback to simple parsing if no API key
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
-      
-      if (!apiKey) {
-        return parseTaskSimple(text)
-      }
-      
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        const response = await fetch('/api/ai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Parse this task request into JSON format. Available lists: ${lists.map(l => `"${l.title}" (id: ${l.id})`).join(', ')}. Extract: title (clean task name without list references), priority (low/medium/high/urgent), listId (exact list id from available lists, default to 'backlog'), dueDate (YYYY-MM-DD if mentioned), labels (array of relevant tags). Request: "${text}". Return only valid JSON with these exact fields: {"title": "", "priority": "", "listId": "", "dueDate": null, "labels": []}`
-              }]
-            }]
+          body: JSON.stringify({ 
+            prompt: `Parse this task request into JSON format. Available lists: ${lists.map(l => `"${l.title}" (id: ${l.id})`).join(', ')}. Extract: title (clean task name without list references), priority (low/medium/high/urgent), listId (exact list id from available lists, default to 'backlog'), dueDate (YYYY-MM-DD if mentioned), labels (array of relevant tags). Request: "${text}". Return only valid JSON with these exact fields: {"title": "", "priority": "", "listId": "", "dueDate": null, "labels": []}` 
           })
         })
+        
+        if (!response.ok) throw new Error('API request failed')
         
         const data = await response.json()
         const parsed = JSON.parse(data.candidates[0].content.parts[0].text)
