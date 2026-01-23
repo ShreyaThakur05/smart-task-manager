@@ -28,7 +28,7 @@ type Task = {
   user_id?: string
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]
-  attachments?: { id: string; name: string; url: string }[]
+  attachments?: string[]
 }
 
 export default function Home() {

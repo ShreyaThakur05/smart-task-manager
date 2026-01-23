@@ -16,7 +16,7 @@ interface Task {
   labels: string[]
   subtasks: { id: string; text: string; completed: boolean }[]
   comments: { id: string; text: string; author: string; timestamp: string }[]
-  attachments: { id: string; name: string; url: string }[]
+  attachments: string[]
   createdAt: string
   updatedAt: string
 }
@@ -351,14 +351,13 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       <span className="text-gray-500 dark:text-gray-400 text-sm">No attachments</span>
                     ) : (
                       <div className="space-y-2">
-                        {task.attachments.map((attachment) => (
-                          <a
-                            key={attachment.id}
-                            href={attachment.url}
-                            className="block p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 text-sm text-blue-600 dark:text-blue-400"
+                        {task.attachments.map((attachment, index) => (
+                          <div
+                            key={index}
+                            className="block p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                           >
-                            {attachment.name}
-                          </a>
+                            {attachment}
+                          </div>
                         ))}
                       </div>
                     )}

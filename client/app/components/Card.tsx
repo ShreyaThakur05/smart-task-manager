@@ -18,7 +18,7 @@ interface CardProps {
     labels?: string[]
     subtasks?: { id: string; text: string; completed: boolean }[]
     comments?: { id: string; text: string; author: string; timestamp: string }[]
-    attachments?: { id: string; name: string; url: string }[]
+    attachments?: string[]
     cover?: {
       type: 'color' | 'gradient'
       value: string
