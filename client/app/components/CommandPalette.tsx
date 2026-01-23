@@ -40,10 +40,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
           description: '',
           priority: 'medium',
           status: 'backlog',
-          labels: [],
-          subtasks: [],
-          comments: [],
-          attachments: []
+          labels: []
         })
         onClose()
       },

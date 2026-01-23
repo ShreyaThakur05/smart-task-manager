@@ -20,25 +20,44 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     const stored = localStorage.getItem('theme') as Theme
-    if (stored) setTheme(stored)
+    if (stored && ['light', 'dark', 'system'].includes(stored)) {
+      setTheme(stored)
+    }
   }, [])
 
   useEffect(() => {
     if (!mounted) return
     
-    localStorage.setItem('theme', theme)
-    
-    const root = document.documentElement
-    root.classList.remove('light', 'dark')
-    
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      root.classList.add(systemTheme)
-      setResolvedTheme(systemTheme)
-    } else {
-      root.classList.add(theme)
-      setResolvedTheme(theme)
+    const updateTheme = () => {
+      localStorage.setItem('theme', theme)
+      
+      const root = document.documentElement
+      root.classList.remove('light', 'dark')
+      
+      let newResolvedTheme: 'light' | 'dark'
+      
+      if (theme === 'system') {
+        newResolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      } else {
+        newResolvedTheme = theme
+      }
+      
+      root.classList.add(newResolvedTheme)
+      setResolvedTheme(newResolvedTheme)
     }
+    
+    updateTheme()
+    
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      if (theme === 'system') {
+        updateTheme()
+      }
+    }
+    
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme, mounted])
 
   if (!mounted) {

@@ -1,262 +1,161 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
-import { Eye, EyeOff, Mail, Lock, User, Sparkles, Zap, Shield } from 'lucide-react'
 
 export default function AuthForm() {
   const [isActive, setIsActive] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [signInEmail, setSignInEmail] = useState('')
+  const [signInPassword, setSignInPassword] = useState('')
+  const [signUpName, setSignUpName] = useState('')
+  const [signUpEmail, setSignUpEmail] = useState('')
+  const [signUpPassword, setSignUpPassword] = useState('')
   const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   
   const { login, register } = useAuthStore()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
-    // Client-side validation
-    if (!email || !password) {
-      setError('Please fill in all fields')
-      return
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address')
-      return
-    }
-    
-    setIsLoading(true)
+    setLoading(true)
     
     try {
-      await login(email.trim().toLowerCase(), password)
+      await login(signInEmail, signInPassword)
     } catch (err: any) {
-      console.error('Login error:', err)
-      setError(err.message || 'Login failed. Please try again.')
+      setError(err.message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
-    // Client-side validation
-    if (!name || !email || !password) {
-      setError('Please fill in all fields')
-      return
-    }
-    
-    if (name.trim().length < 2) {
-      setError('Name must be at least 2 characters')
-      return
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address')
-      return
-    }
-    
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-    
-    setIsLoading(true)
+    setLoading(true)
     
     try {
-      await register(email.trim().toLowerCase(), password, name.trim())
+      await register(signUpEmail, signUpPassword, signUpName)
     } catch (err: any) {
-      console.error('Registration error:', err)
-      setError(err.message || 'Registration failed. Please try again.')
+      setError(err.message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-0">
-      <div className={`relative bg-white dark:bg-gray-800 rounded-none shadow-2xl overflow-hidden w-full h-screen transition-all duration-600 ease-in-out ${isActive ? 'active' : ''}`}>
-        
-        {/* Sign In Form */}
-        <motion.div 
-          className={`absolute top-0 left-0 w-1/2 h-full z-20 transition-all duration-600 ease-in-out ${
-            isActive ? 'translate-x-full' : 'translate-x-0'
-          }`}
-        >
-          <form onSubmit={handleLogin} className="bg-white dark:bg-gray-800 flex flex-col items-center justify-center px-10 h-full">
-            <div className="flex items-center gap-2 mb-8">
-              <Sparkles className="w-10 h-10 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Smart Tasks</h1>
-            </div>
-            <h2 className="text-2xl font-semibold mb-6 text-gray-700 dark:text-gray-200">Welcome Back</h2>
-            
-            <div className="relative w-full mb-4">
-              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-12 py-4 text-base outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                placeholder="Email address"
-                required
-              />
-            </div>
-            
-            <div className="relative w-full mb-4">
-              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-12 py-4 pr-12 text-base outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                placeholder="Password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            
-            {error && !isActive && (
-              <p className="text-red-500 text-sm mb-4">{error}</p>
-            )}
-            
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold tracking-wider uppercase px-12 py-4 rounded-xl mt-4 cursor-pointer transition-colors disabled:opacity-50 w-full"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
-        </motion.div>
-
+    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center overflow-hidden">
+      <div className={`auth-container ${isActive ? 'active' : ''}`}>
         {/* Sign Up Form */}
-        <motion.div 
-          className={`absolute top-0 left-0 w-1/2 h-full z-10 transition-all duration-600 ease-in-out ${
-            isActive ? 'translate-x-full opacity-100 z-50' : 'translate-x-0 opacity-0 z-10'
-          }`}
-        >
-          <form onSubmit={handleRegister} className="bg-white dark:bg-gray-800 flex flex-col items-center justify-center px-10 h-full">
-            <div className="flex items-center gap-2 mb-8">
-              <Sparkles className="w-10 h-10 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Smart Tasks</h1>
-            </div>
-            <h2 className="text-2xl font-semibold mb-6 text-gray-700 dark:text-gray-200">Join Our Community</h2>
-            
-            <div className="relative w-full mb-4">
-              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-12 py-4 text-base outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                placeholder="Full name"
-                required
-              />
-            </div>
-            
-            <div className="relative w-full mb-4">
-              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-12 py-4 text-base outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                placeholder="Email address"
-                required
-              />
-            </div>
-            
-            <div className="relative w-full mb-4">
-              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl px-12 py-4 pr-12 text-base outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                placeholder="Password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            
-            {error && isActive && (
-              <p className="text-red-500 text-sm mb-4">{error}</p>
-            )}
-            
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold tracking-wider uppercase px-12 py-4 rounded-xl mt-4 cursor-pointer transition-colors disabled:opacity-50 w-full"
-            >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+        <div className="form-container sign-up">
+          <form onSubmit={handleSignUp}>
+            <h1 className="text-2xl font-bold mb-5">Create Account</h1>
+            <span className="text-xs mb-4 block text-gray-600 dark:text-gray-400">Use your email for registration</span>
+            <input
+              type="text"
+              placeholder="Name"
+              value={signUpName}
+              onChange={(e) => setSignUpName(e.target.value)}
+              required
+              className="auth-input"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+              required
+              className="auth-input"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={signUpPassword}
+              onChange={(e) => setSignUpPassword(e.target.value)}
+              required
+              className="auth-input"
+            />
+            {error && <div className="text-red-600 dark:text-red-400 text-xs mt-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded">{error}</div>}
+            <button type="submit" disabled={loading} className="auth-button">
+              {loading ? 'Loading...' : 'Sign Up'}
             </button>
-          </form>
-        </motion.div>
-
-        {/* Toggle Container */}
-        <div className={`absolute top-0 left-1/2 w-1/2 h-full overflow-hidden transition-all duration-600 ease-in-out z-[1000] ${
-          isActive 
-            ? '-translate-x-full rounded-r-[150px] rounded-bl-[100px]' 
-            : 'translate-x-0 rounded-l-[150px] rounded-br-[100px]'
-        }`}>
-          <div className={`bg-gradient-to-br from-blue-600 to-indigo-600 h-full text-white relative -left-full w-[200%] transition-all duration-600 ease-in-out ${
-            isActive ? 'translate-x-1/2' : 'translate-x-0'
-          }`}>
-            
-            {/* Toggle Left Panel */}
-            <div className={`absolute w-1/2 h-full flex flex-col items-center justify-center px-12 text-center top-0 transition-all duration-600 ease-in-out ${
-              isActive ? 'translate-x-0' : '-translate-x-[200%]'
-            }`}>
-              <h1 className="text-3xl font-bold mb-6">Welcome Back!</h1>
-              <p className="text-lg leading-7 tracking-wide mb-8 opacity-90">
-                Ready to boost your productivity? Sign in to access your personalized task management dashboard.
-              </p>
-              <button
+            <div className="md:hidden mt-4">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Already have an account?</p>
+              <button 
+                type="button"
+                className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"
                 onClick={() => setIsActive(false)}
-                className="bg-transparent border-2 border-white text-white text-sm font-semibold tracking-wider uppercase px-12 py-4 rounded-xl cursor-pointer hover:bg-white hover:text-blue-600 transition-all"
               >
                 Sign In
               </button>
             </div>
+          </form>
+        </div>
 
-            {/* Toggle Right Panel */}
-            <div className={`absolute right-0 w-1/2 h-full flex flex-col items-center justify-center px-12 text-center top-0 transition-all duration-600 ease-in-out ${
-              isActive ? 'translate-x-[200%]' : 'translate-x-0'
-            }`}>
-              <h1 className="text-3xl font-bold mb-6">Start Your Journey!</h1>
-              <p className="text-lg leading-7 tracking-wide mb-8 opacity-90">
-                Transform your productivity with intelligent task management. Create your free account and experience the future of organized work.
-              </p>
-              <button
+        {/* Sign In Form */}
+        <div className="form-container sign-in">
+          <form onSubmit={handleSignIn}>
+            <h1 className="text-2xl font-bold mb-5">Sign In</h1>
+            <span className="text-xs mb-4 block text-gray-600 dark:text-gray-400">Use your email and password</span>
+            <input
+              type="email"
+              placeholder="Email"
+              value={signInEmail}
+              onChange={(e) => setSignInEmail(e.target.value)}
+              required
+              className="auth-input"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={signInPassword}
+              onChange={(e) => setSignInPassword(e.target.value)}
+              required
+              className="auth-input"
+            />
+            <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 my-3 block">Forget Your Password?</a>
+            {error && <div className="text-red-600 dark:text-red-400 text-xs mt-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded">{error}</div>}
+            <button type="submit" disabled={loading} className="auth-button">
+              {loading ? 'Loading...' : 'Sign In'}
+            </button>
+            <div className="md:hidden mt-4">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Don't have an account?</p>
+              <button 
+                type="button"
+                className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"
                 onClick={() => setIsActive(true)}
-                className="bg-transparent border-2 border-white text-white text-sm font-semibold tracking-wider uppercase px-12 py-4 rounded-xl cursor-pointer hover:bg-white hover:text-blue-600 transition-all"
+              >
+                Sign Up
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Toggle Container */}
+        <div className="toggle-container">
+          <div className="toggle">
+            <div className="toggle-panel toggle-left">
+              <h1 className="text-2xl font-bold mb-4">Welcome Back!</h1>
+              <p className="text-sm mb-6">Enter your personal details to use all site features</p>
+              <button 
+                className="hidden-button" 
+                onClick={() => setIsActive(false)}
+              >
+                Sign In
+              </button>
+            </div>
+            <div className="toggle-panel toggle-right">
+              <h1 className="text-2xl font-bold mb-4">Hello, Friend!</h1>
+              <p className="text-sm mb-6">Register with your personal details to use all site features</p>
+              <button 
+                className="hidden-button" 
+                onClick={() => setIsActive(true)}
               >
                 Sign Up
               </button>
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   )

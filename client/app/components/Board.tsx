@@ -63,13 +63,19 @@ export default function Board({ board, moveTask }: BoardProps) {
     const activeId = active.id as string
     const overId = over.id as string
     
-    // Check if dragging a card
     const activeCard = board.lists.flatMap(list => list.cards).find(card => card.id === activeId)
     if (activeCard && moveTask) {
-      // Find target list
       const targetList = board.lists.find(list => list.id === overId)
       if (targetList) {
-        moveTask(activeId, targetList.id)
+        const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+          'backlog': 'backlog',
+          'in-progress': 'in-progress', 
+          'review': 'review',
+          'done': 'done'
+        }
+        
+        const newStatus = statusMap[targetList.id] || 'backlog'
+        moveTask(activeId, newStatus)
       }
     }
   }
@@ -103,14 +109,14 @@ export default function Board({ board, moveTask }: BoardProps) {
   }
 
   return (
-    <div className="h-full">
+    <div className="min-h-screen">
       <DndContext 
         sensors={sensors}
         onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
         collisionDetection={closestCorners}
       >
-        <div className="flex gap-6 h-full overflow-x-auto pb-6">
+        <div className="flex gap-6 overflow-x-auto pb-6">
           <SortableContext items={board.lists.map(l => l.id)} strategy={horizontalListSortingStrategy}>
             {board.lists.map(list => (
               <List key={list.id} list={list} />

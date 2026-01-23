@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from './components/ThemeProvider'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100`} suppressHydrationWarning={true}>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

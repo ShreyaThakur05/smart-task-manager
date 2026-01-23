@@ -28,42 +28,43 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
   
   const { addTask } = useTaskStore()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
 
-    addTask({
-      title,
-      description,
-      priority,
-      status,
-      assignee: assignee || undefined,
-      dueDate: dueDate || undefined,
-      labels: [...labels, ...(timeEstimate ? [`estimate-${timeEstimate}`] : [])],
-      subtasks: [],
-      comments: [],
-      attachments: attachments.map(file => ({
-        id: Date.now().toString() + Math.random(),
-        name: file.name,
-        url: URL.createObjectURL(file)
-      })),
-      listId: defaultListId
-    })
+    try {
+      const attachmentNames = attachments.map(file => file.name)
+      
+      await addTask({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        status,
+        assignee: assignee.trim() || undefined,
+        dueDate: dueDate || undefined,
+        labels: [...labels, ...(timeEstimate ? [`estimate-${timeEstimate}`] : [])],
+        attachments: attachmentNames
+      })
 
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setPriority('medium')
-    setStatus(defaultStatus)
-    setAssignee('')
-    setDueDate('')
-    setLabels([])
-    setNewLabel('')
-    setTimeEstimate('')
-    setAttachments([])
-    setImportance('medium')
-    setCategory('')
-    onClose()
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setPriority('medium')
+      setStatus(defaultStatus)
+      setAssignee('')
+      setDueDate('')
+      setLabels([])
+      setNewLabel('')
+      setTimeEstimate('')
+      setAttachments([])
+      setImportance('medium')
+      setCategory('')
+      
+      onClose()
+    } catch (error) {
+      console.error('Failed to create task:', error)
+      alert('Failed to create task. Please try again.')
+    }
   }
 
   const addLabel = () => {
@@ -106,36 +107,38 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
             onClick={onClose}
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-4 md:inset-8 lg:inset-16 xl:top-1/2 xl:left-1/2 xl:transform xl:-translate-x-1/2 xl:-translate-y-1/2 xl:w-full xl:max-w-4xl xl:h-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col"
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Flag className="w-4 h-4 text-white" />
+            <div className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <Flag className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create New Task</h2>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Create New Task</h2>
+                <button
+                  onClick={onClose}
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-white/50 dark:hover:bg-gray-600/50 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-white/50 dark:hover:bg-gray-600/50 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Form */}
-            <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Form */}
+              <div className="flex-1 overflow-y-auto">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Title */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -273,6 +276,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -375,7 +379,8 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
                     Cancel
                   </button>
                 </div>
-              </form>
+                </form>
+              </div>
             </div>
           </motion.div>
         </>

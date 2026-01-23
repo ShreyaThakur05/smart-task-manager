@@ -34,39 +34,68 @@ export default function DashboardView() {
     done: tasks.filter(t => t.status === 'done').length
   }
 
-  // Recent activity (empty for now)
-  const recentActivity: any[] = []
+  // Recent activity - generate from actual task data or sample data
+  const recentActivity = tasks.length > 0 ? tasks
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 8)
+    .map(task => ({
+      id: task.id,
+      user: task.assignee || 'You',
+      action: task.status === 'done' ? 'completed' : 
+              task.status === 'in-progress' ? 'started working on' :
+              task.status === 'review' ? 'moved to review' : 'created',
+      task: task.title,
+      time: new Date(task.updated_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      priority: task.priority,
+      status: task.status
+    })) : [
+    {
+      id: '1',
+      user: 'You',
+      action: 'created',
+      task: 'Welcome to Smart Tasks',
+      time: 'Just now',
+      priority: 'medium',
+      status: 'backlog'
+    },
+    {
+      id: '2', 
+      user: 'System',
+      action: 'initialized',
+      task: 'Your workspace',
+      time: '1 min ago',
+      priority: 'low',
+      status: 'done'
+    }
+  ]
 
   const kpiCards = [
     {
       title: 'Total Tasks',
       value: totalTasks,
-      change: '+12%',
-      trend: 'up',
       icon: Target,
       color: 'blue'
     },
     {
       title: 'Completed',
       value: completedTasks,
-      change: '+8%',
-      trend: 'up',
       icon: CheckCircle,
       color: 'green'
     },
     {
       title: 'In Progress',
       value: inProgressTasks,
-      change: '-3%',
-      trend: 'down',
       icon: Clock,
       color: 'yellow'
     },
     {
       title: 'Overdue',
       value: overdueTasks,
-      change: '+2%',
-      trend: 'up',
       icon: AlertTriangle,
       color: 'red'
     }
@@ -106,11 +135,6 @@ export default function DashboardView() {
                 <div className={`w-12 h-12 ${colorClasses[0]} rounded-lg flex items-center justify-center`}>
                   <IconComponent className="w-6 h-6 text-white" />
                 </div>
-              </div>
-              <div className="flex items-center mt-4">
-                <TrendingUp className={`w-4 h-4 ${colorClasses[1]} mr-1`} />
-                <span className={`text-sm font-medium ${colorClasses[1]}`}>{kpi.change}</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">vs last week</span>
               </div>
             </motion.div>
           )

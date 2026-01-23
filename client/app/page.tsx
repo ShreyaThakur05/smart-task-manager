@@ -2,7 +2,6 @@
 
 import { useTaskStore } from './store/taskStore'
 import { useAuthStore } from './store/authStore'
-import { useHydration } from './hooks/useHydration'
 import AuthForm from './components/AuthForm'
 import Board from './components/Board'
 import TableView from './components/TableView'
@@ -13,60 +12,64 @@ import TaskDetailModal from './components/TaskDetailModal'
 import TaskCreateModal from './components/TaskCreateModal'
 import AIAssistant from './components/AIAssistant'
 import { useState, useEffect } from 'react'
-import { Search, Filter, Plus, Bell, MoreHorizontal, LayoutGrid, List, Calendar, BarChart3, Zap, Command, LogOut, Bot } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, LayoutGrid, List, Calendar, BarChart3, Zap, LogOut, Bot, User } from 'lucide-react'
+
+type Task = {
+  id: string
+  title: string
+  description?: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  status: 'backlog' | 'in-progress' | 'review' | 'done'
+  labels: string[]
+  dueDate?: string
+  assignee?: string
+  created_at: string
+  updated_at: string
+  user_id?: string
+  subtasks?: { id: string; text: string; completed: boolean }[]
+  comments?: { id: string; text: string; author: string; timestamp: string }[]
+  attachments?: { id: string; name: string; url: string }[]
+}
 
 export default function Home() {
-  const isHydrated = useHydration()
-  const { user, logout } = useAuthStore()
-  const { tasks, lists, view, setView, selectedTask, setSelectedTask, filter, setFilter, getFilteredTasks, addTask, addList, moveTask, loadData } = useTaskStore()
+  const authStore = useAuthStore()
+  const { 
+    tasks, 
+    lists, 
+    view, 
+    setView, 
+    selectedTask, 
+    setSelectedTask, 
+    getFilteredTasks, 
+    addTask, 
+    moveTask, 
+    loadData
+  } = useTaskStore()
   const [mounted, setMounted] = useState(false)
-  const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
-  const [quickTaskTitle, setQuickTaskTitle] = useState('')
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
-  // First effect: mount and rehydrate from storage
   useEffect(() => {
     setMounted(true)
+    authStore.initialize()
   }, [])
 
-  // Second effect: load data only after component is mounted, hydrated, and user is available
   useEffect(() => {
-    if (isHydrated && mounted && user) {
-      loadData() // Load data from MongoDB when user is authenticated
+    if (mounted && authStore.user) {
+      loadData()
     }
-  }, [isHydrated, mounted, user, loadData])
+  }, [mounted, authStore.user])
 
-  // Third effect: global keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault()
-        setShowQuickAdd(true)
-      }
-    }
+  if (!mounted || authStore.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  const handleQuickAdd = () => {
-    if (!quickTaskTitle.trim()) return
-    
-    addTask({
-      title: quickTaskTitle,
-      description: '',
-      priority: 'medium',
-      status: 'backlog',
-      labels: [],
-      subtasks: [],
-      comments: [],
-      attachments: []
-    })
-    
-    setQuickTaskTitle('')
-    setShowQuickAdd(false)
+  if (!authStore.user) {
+    return <AuthForm />
   }
 
   const filteredTasks = getFilteredTasks()
@@ -77,224 +80,199 @@ export default function Home() {
     done: filteredTasks.filter(t => t.status === 'done')
   }
 
+  const handleMoveTask = (taskId: string, newListId: string) => {
+    moveTask(taskId, newListId as Task['status'])
+  }
+
   const boardData = {
     id: '1',
     title: 'My Board',
-    lists: lists.map(list => {
-      // For default lists, use status-based filtering
+    lists: lists.length > 0 ? lists.map(list => {
+      // For default lists, filter by status
       if (['backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
-        const statusKey = list.id as keyof typeof tasksByStatus
         return {
           ...list,
-          cards: tasksByStatus[statusKey] || []
+          cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
         }
       }
-      // For user-created lists, filter by listId
+      // For custom lists, show all tasks (they use backlog status but belong to custom list)
       return {
         ...list,
-        cards: filteredTasks.filter(t => t.listId === list.id)
+        cards: filteredTasks.filter(task => {
+          // Custom logic: tasks created in custom lists should appear there
+          // For now, show tasks with backlog status in custom lists too
+          return task.status === 'backlog'
+        })
       }
-    })
-  }
-
-  if (!isHydrated || !mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="text-gray-600 dark:text-gray-400">Loading workspace...</span>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return <AuthForm />
+    }) : [
+      { id: 'backlog', title: 'Backlog', cards: tasksByStatus.backlog || [] },
+      { id: 'in-progress', title: 'In Progress', cards: tasksByStatus['in-progress'] || [] },
+      { id: 'review', title: 'Review', cards: tasksByStatus.review || [] },
+      { id: 'done', title: 'Done', cards: tasksByStatus.done || [] }
+    ]
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Top Navigation */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
+      {/* Header - Fixed */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm sticky top-0 z-40">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Smart Tasks</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
             </div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Tasks</h1>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Quick Add */}
-            <AnimatePresence>
-              {showQuickAdd && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="absolute top-16 right-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 w-80 z-40"
-                >
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Quick Add Task</h3>
-                  <input
-                    type="text"
-                    placeholder="Task title..."
-                    value={quickTaskTitle}
-                    onChange={(e) => setQuickTaskTitle(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleQuickAdd()}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-3"
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleQuickAdd}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                    >
-                      Add Task
-                    </button>
-                    <button
-                      onClick={() => setShowQuickAdd(false)}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* User Menu */}
-            <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
-              </div>
-              <div className="relative">
-                <button className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                  {user.name?.charAt(0).toUpperCase()}
-                </button>
-              </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm">Sign Out</span>
-              </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <User className="w-4 h-4" />
+              <span>{authStore.user?.user_metadata?.name || authStore.user?.email}</span>
             </div>
+            <ThemeToggle />
+            <button 
+              onClick={authStore.logout} 
+              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Secondary Navigation */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+      {/* Toolbar - Fixed */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-16 z-30">
         <div className="flex items-center justify-between">
-          {/* Stats */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full font-medium">
                 {filteredTasks.length} tasks
               </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+              <span className="text-sm bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-3 py-1 rounded-full font-medium">
                 {tasksByStatus.done.length} completed
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            {/* View Switcher */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               {[
                 { key: 'board', icon: LayoutGrid, label: 'Board' },
-                { key: 'list', icon: List, label: 'Table' },
+                { key: 'list', icon: List, label: 'List' },
                 { key: 'calendar', icon: Calendar, label: 'Calendar' },
-                { key: 'timeline', icon: BarChart3, label: 'Dashboard' }
+                { key: 'timeline', icon: BarChart3, label: 'Timeline' }
               ].map(({ key, icon: Icon, label }) => (
                 <button
                   key={key}
                   onClick={() => setView(key as any)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    view === key
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
+                  className={`p-2 rounded-md transition-all duration-200 flex items-center gap-2 ${
+                    view === key 
+                      ? 'bg-white dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
+                  title={label}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{label}</span>
+                  <span className="hidden lg:inline text-sm">{label}</span>
                 </button>
               ))}
             </div>
             
-            {/* Theme Toggle */}
-            <div className="hidden md:block">
-              <ThemeToggle />
-            </div>
-            
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowTaskModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg font-medium text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Task</span>
-              </button>
-              
-              <button
-                onClick={() => setShowAIAssistant(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg font-medium text-sm"
-              >
-                <Bot className="w-4 h-4" />
-                <span>AI Create</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setShowTaskModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Task</span>
+            </button>
+            
+            <button
+              onClick={() => setShowAIAssistant(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <Bot className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Create</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full p-6">
-          {view === 'board' && <Board board={boardData} moveTask={moveTask} />}
+      <main className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-full">
+          {view === 'board' && <Board board={boardData} moveTask={handleMoveTask} />}
           {view === 'list' && <TableView />}
           {view === 'calendar' && <CalendarView />}
           {view === 'timeline' && <DashboardView />}
         </div>
       </main>
 
-      {/* Task Create Modal */}
+      {/* Footer */}
+      <footer className="relative overflow-hidden bg-gradient-to-br from-[#0b1020] via-[#0e1630] to-[#090d1a] text-gray-300">
+        {/* Soft glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.15),transparent_40%)]" />
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            
+            {/* Brand */}
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+                <div className="h-11 w-11 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-lg">
+                  ST
+                </div>
+                <h3 className="text-xl font-semibold text-white">
+                  Smart Tasks
+                </h3>
+              </div>
+              <p className="text-sm text-gray-400 max-w-sm leading-relaxed">
+                Designed to help you focus on what truly matters — clarity, flow, and meaningful progress.
+              </p>
+            </div>
+
+            {/* Creator */}
+            <div className="text-center md:text-right">
+              <p className="text-sm text-gray-400">Crafted with care by</p>
+              <h4 className="text-lg font-semibold text-white mt-1">
+                Shreya Thakur
+              </h4>
+              <p className="text-sm text-gray-400 mt-1">
+                Full Stack Developer
+              </p>
+
+              <div className="flex justify-center md:justify-end gap-6 mt-4">
+                <a href="https://github.com/ShreyaThakur05" target="_blank" rel="noopener noreferrer" className="hover:text-white transition cursor-pointer">GitHub</a>
+                <a href="https://www.linkedin.com/in/shreya-thakur-734097282/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition cursor-pointer">LinkedIn</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/10 mt-8 pt-6 flex flex-col md:flex-row justify-between text-xs text-gray-400">
+            <p>© 2026 Smart Tasks. All rights reserved.</p>
+            <div className="flex gap-6 mt-2 md:mt-0">
+              <span className="hover:text-white transition cursor-pointer">Privacy</span>
+              <span className="hover:text-white transition cursor-pointer">Terms</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modals */}
       <TaskCreateModal
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus="backlog"
       />
-
-      {/* AI Assistant */}
-      <AIAssistant
-        isOpen={showAIAssistant}
-        onClose={() => setShowAIAssistant(false)}
-      />
-
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        task={selectedTask}
-        isOpen={!!selectedTask}
-        onClose={() => setSelectedTask(null)}
-      />
-
-      {/* Global Click Handler */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        onClick={() => {
-          setShowQuickAdd(false)
-        }}
-      />
+      
+      {showAIAssistant && (
+        <AIAssistant isOpen={showAIAssistant} onClose={() => setShowAIAssistant(false)} />
+      )}
     </div>
   )
 }

@@ -133,9 +133,9 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
       {/* Calendar Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -171,13 +171,13 @@ export default function CalendarView() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4">
+      <div className="flex-1 p-4 overflow-auto">
         {/* Day Headers */}
         <div className="grid grid-cols-7 gap-0 mb-2">
           {dayNames.map((day) => (
             <div
               key={day}
-              className="h-10 flex items-center justify-center text-sm font-medium text-gray-500 dark:text-gray-400"
+              className="h-8 flex items-center justify-center text-sm font-medium text-gray-500 dark:text-gray-400"
             >
               {day}
             </div>
@@ -191,7 +191,7 @@ export default function CalendarView() {
       </div>
 
       {/* Calendar Legend */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 flex-shrink-0">
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full" />

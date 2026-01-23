@@ -22,80 +22,115 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
     
-    // Demo account
+    // Demo account - always available for testing
     if (email === 'shreya_list@demo.com' && password === 'test123') {
+      console.log('Using demo account')
       const token = jwt.sign({ userId: 'demo-user', email }, process.env.JWT_SECRET, { expiresIn: '7d' })
       return NextResponse.json({
         user: { id: 'demo-user', email, name: 'Shreya Demo' },
         token
       })
     }
+
+    // Test account for local development
+    if (email === 'test@example.com' && password === 'test123') {
+      console.log('Using test account')
+      const token = jwt.sign({ userId: 'test-user', email }, process.env.JWT_SECRET, { expiresIn: '7d' })
+      return NextResponse.json({
+        user: { id: 'test-user', email, name: 'Test User' },
+        token
+      })
+    }
     
+    // Connect to MongoDB for real users
     console.log('Connecting to MongoDB...')
-    const client = await clientPromise
-    const db = client.db('taskmanagement')
-    const users = db.collection('users')
-    console.log('MongoDB connected successfully')
+    let client: any
+    try {
+      client = await clientPromise
+      console.log('MongoDB connected successfully')
+    } catch (mongoError: any) {
+      console.error('MongoDB connection failed:', mongoError.message)
+      return NextResponse.json({ 
+        error: 'Database connection failed. Please use demo account: shreya_list@demo.com / test123' 
+      }, { status: 503 })
+    }
+    
     
     if (action === 'register') {
       if (!name || name.trim().length === 0) {
         return NextResponse.json({ error: 'Name is required' }, { status: 400 })
       }
 
-      console.log('Checking for existing user...')
-      const existingUser = await users.findOne({ email: email.toLowerCase() })
-      if (existingUser) {
-        return NextResponse.json({ error: 'User already exists. Please login instead.' }, { status: 400 })
+      try {
+        console.log('Checking for existing user...')
+        const db = client.db('taskmanagement')
+        const users = db.collection('users')
+        
+        const existingUser = await users.findOne({ email: email.toLowerCase() })
+        if (existingUser) {
+          return NextResponse.json({ error: 'User already exists. Please login instead.' }, { status: 400 })
+        }
+        
+        console.log('Hashing password...')
+        const hashedPassword = await bcrypt.hash(password, 12)
+        
+        console.log('Creating new user...')
+        const result = await users.insertOne({
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          name: name.trim(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        
+        console.log('User created with ID:', result.insertedId)
+        const token = jwt.sign({ userId: result.insertedId.toString(), email: email.toLowerCase() }, process.env.JWT_SECRET!, { expiresIn: '7d' })
+        
+        // Send welcome email (non-blocking)
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-welcome-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name })
+        }).catch(() => console.log('Welcome email failed'))
+        
+        return NextResponse.json({
+          user: { id: result.insertedId.toString(), email: email.toLowerCase(), name: name.trim() },
+          token
+        })
+      } catch (registerError: any) {
+        console.error('Register error:', registerError.message)
+        return NextResponse.json({ error: 'Registration failed. Please try again.' }, { status: 500 })
       }
-      
-      console.log('Hashing password...')
-      const hashedPassword = await bcrypt.hash(password, 12)
-      
-      console.log('Creating new user...')
-      const result = await users.insertOne({
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        name: name.trim(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      
-      console.log('User created with ID:', result.insertedId)
-      const token = jwt.sign({ userId: result.insertedId.toString(), email: email.toLowerCase() }, process.env.JWT_SECRET, { expiresIn: '7d' })
-      
-      // Send welcome email (non-blocking)
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-welcome-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name })
-      }).catch(() => console.log('Welcome email failed'))
-      
-      return NextResponse.json({
-        user: { id: result.insertedId.toString(), email: email.toLowerCase(), name: name.trim() },
-        token
-      })
     }
     
     if (action === 'login') {
-      console.log('Looking for user...')
-      const user = await users.findOne({ email: email.toLowerCase() })
-      if (!user) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+      try {
+        console.log('Looking for user...')
+        const db = client.db('taskmanagement')
+        const users = db.collection('users')
+        
+        const user = await users.findOne({ email: email.toLowerCase() })
+        if (!user) {
+          return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+        }
+        
+        console.log('Verifying password...')
+        const isValid = await bcrypt.compare(password, user.password)
+        if (!isValid) {
+          return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+        }
+        
+        console.log('Login successful for user:', user._id)
+        const token = jwt.sign({ userId: user._id.toString(), email: user.email }, process.env.JWT_SECRET!, { expiresIn: '7d' })
+        
+        return NextResponse.json({
+          user: { id: user._id.toString(), email: user.email, name: user.name },
+          token
+        })
+      } catch (loginError: any) {
+        console.error('Login error:', loginError.message)
+        return NextResponse.json({ error: 'Login failed. Please try again.' }, { status: 500 })
       }
-      
-      console.log('Verifying password...')
-      const isValid = await bcrypt.compare(password, user.password)
-      if (!isValid) {
-        return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
-      }
-      
-      console.log('Login successful for user:', user._id)
-      const token = jwt.sign({ userId: user._id.toString(), email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' })
-      
-      return NextResponse.json({
-        user: { id: user._id.toString(), email: user.email, name: user.name },
-        token
-      })
     }
     
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })

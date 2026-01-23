@@ -86,7 +86,7 @@ export default function List({ list }: ListProps) {
     }
   }
 
-  const handleAddCard = () => {
+  const handleAddCard = async () => {
     if (!newCardTitle.trim()) return
     
     const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
@@ -96,22 +96,22 @@ export default function List({ list }: ListProps) {
       'done': 'done'
     }
     
-    addTask({
-      title: newCardTitle,
-      description: '',
-      priority: 'medium',
-      status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
-        ? statusMap[list.title.toLowerCase()] || 'backlog'
-        : 'backlog',
-      labels: [],
-      subtasks: [],
-      comments: [],
-      attachments: [],
-      listId: list.id
-    })
-    
-    setNewCardTitle('')
-    setShowAddCard(false)
+    try {
+      await addTask({
+        title: newCardTitle,
+        description: '',
+        priority: 'medium',
+        status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
+          ? statusMap[list.title.toLowerCase()] || 'backlog'
+          : 'backlog',
+        labels: []
+      })
+      
+      setNewCardTitle('')
+      setShowAddCard(false)
+    } catch (error) {
+      // Handle error silently or show notification
+    }
   }
 
   return (
@@ -310,10 +310,14 @@ export default function List({ list }: ListProps) {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    deleteList(list.id)
-                    setShowDeleteModal(false)
-                    setShowListMenu(false)
+                  onClick={async () => {
+                    try {
+                      await deleteList(list.id)
+                      setShowDeleteModal(false)
+                      setShowListMenu(false)
+                    } catch (error) {
+                      // Handle error
+                    }
                   }}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
