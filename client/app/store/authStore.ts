@@ -59,17 +59,6 @@ export const useAuthStore = create<AuthState>()(persist(
         
         if (data.user) {
           set({ user: data.user })
-          
-          // Send welcome email
-          try {
-            await fetch('/api/send-welcome-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: email.toLowerCase().trim(), name: name.trim() })
-            })
-          } catch (emailError) {
-            // Email failure shouldn't block registration
-          }
         }
       } catch (err: any) {
         throw new Error(err.message || 'Registration failed. Please try again.')
