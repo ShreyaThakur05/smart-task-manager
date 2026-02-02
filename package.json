@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "AI-powered task management platform inspired by Trello",
   "scripts": {
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
-    "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && npm run dev",
+    "dev": "cd client && npm run dev",
     "build": "cd client && npm run build",
-    "start": "cd server && npm start"
+    "start": "cd client && npm start"
   },
-  "workspaces": ["client", "server", "shared"],
+  "workspaces": ["client"],
   "devDependencies": {
     "concurrently": "^8.2.2"
   }

@@ -19,6 +19,9 @@ out/
 build/
 dist/
 
+# Vercel
+.vercel
+
 # IDE
 .vscode/
 .idea/
