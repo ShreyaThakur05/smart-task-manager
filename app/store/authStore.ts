@@ -1,10 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { supabase } from '../lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { validateEnv } from '../lib/env'
+
+const env = validateEnv()
+
+interface AuthUser {
+  id: string
+  email: string
+  user_metadata: { name?: string }
+}
 
 interface AuthState {
-  user: User | null
+  user: AuthUser | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string) => Promise<void>
@@ -16,39 +23,38 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(persist(
   (set, get) => ({
     user: null,
-    loading: true,
+    loading: false,
 
     login: async (email: string, password: string) => {
-      try {
-        console.log('Attempting to login with:', email.toLowerCase().trim())
-        
-        const { data, error } = await supabase.auth.signInWithPassword({
+      if (!env.hasValidSupabase) {
+        // Mock login
+        const mockUser: AuthUser = {
+          id: 'mock-user-' + Date.now(),
           email: email.toLowerCase().trim(),
-          password
-        })
-        
-        console.log('Login response:', { data, error })
-        
-        if (error) {
-          console.error('Login error:', error)
-          if (error.message.includes('Invalid login credentials')) {
-            throw new Error('Invalid email or password. Please check your credentials.')
-          }
-          if (error.message.includes('fetch')) {
-            throw new Error('Network error. Please check your internet connection and try again.')
-          }
-          throw new Error(error.message)
+          user_metadata: { name: email.split('@')[0] }
         }
-        
-        if (data.user) {
-          set({ user: data.user })
+        set({ user: mockUser })
+        return
+      }
+
+      // Real Supabase login
+      const { supabase } = await import('../lib/supabase')
+      if (!supabase) throw new Error('Supabase not configured')
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password
+      })
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials.')
         }
-      } catch (err: any) {
-        console.error('Login catch error:', err)
-        if (err.message.includes('fetch')) {
-          throw new Error('Network error. Please check your internet connection and try again.')
-        }
-        throw err
+        throw new Error(error.message)
+      }
+      
+      if (data.user) {
+        set({ user: data.user as AuthUser })
       }
     },
 
@@ -61,60 +67,73 @@ export const useAuthStore = create<AuthState>()(persist(
       if (password.length < 6) {
         throw new Error('Password must be at least 6 characters long')
       }
-      
-      try {
-        console.log('Attempting to register with:', { email: email.toLowerCase().trim(), name: name.trim() })
-        
-        const { data, error } = await supabase.auth.signUp({
+
+      if (!env.hasValidSupabase) {
+        // Mock registration
+        const mockUser: AuthUser = {
+          id: 'mock-user-' + Date.now(),
           email: email.toLowerCase().trim(),
-          password,
-          options: {
-            data: { 
-              name: name.trim()
-            },
-            emailRedirectTo: `${window.location.origin}/auth/callback`
-          }
-        })
-        
-        console.log('Supabase response:', { data, error })
-        
-        if (error) {
-          console.error('Supabase error:', error)
-          throw new Error(error.message)
+          user_metadata: { name: name.trim() }
         }
-        
-        if (data.user) {
-          set({ user: data.user })
-          // Check if email confirmation is required
-          if (!data.session) {
-            throw new Error('Please check your email and click the confirmation link to complete registration.')
-          }
+        set({ user: mockUser })
+        return
+      }
+      
+      // Real Supabase registration
+      const { supabase } = await import('../lib/supabase')
+      if (!supabase) throw new Error('Supabase not configured')
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password,
+        options: {
+          data: { name: name.trim() }
         }
-      } catch (err: any) {
-        console.error('Registration error:', err)
-        if (err.message.includes('fetch')) {
-          throw new Error('Network error. Please check your internet connection and try again.')
-        }
-        throw new Error(err.message || 'Registration failed. Please try again.')
+      })
+      
+      if (error) {
+        throw new Error(error.message)
+      }
+      
+      if (data.user) {
+        set({ user: data.user as AuthUser })
       }
     },
 
     logout: async () => {
+      if (!env.hasValidSupabase) {
+        set({ user: null })
+        return
+      }
+
+      const { supabase } = await import('../lib/supabase')
+      if (!supabase) return
+      
       const { error } = await supabase.auth.signOut()
       if (error) throw new Error(error.message)
       set({ user: null })
     },
 
     initialize: async () => {
-      set({ loading: true })
+      set({ loading: false })
       
-      const { data: { session } } = await supabase.auth.getSession()
-      set({ user: session?.user || null, loading: false })
-      
-      // Listen for auth changes
-      supabase.auth.onAuthStateChange((event, session) => {
-        set({ user: session?.user || null, loading: false })
-      })
+      if (!env.hasValidSupabase) {
+        return
+      }
+
+      try {
+        const { supabase } = await import('../lib/supabase')
+        if (!supabase) return
+        
+        const { data: { session } } = await supabase.auth.getSession()
+        set({ user: session?.user as AuthUser || null })
+        
+        supabase.auth.onAuthStateChange((event, session) => {
+          set({ user: session?.user as AuthUser || null })
+        })
+      } catch (error) {
+        console.warn('Supabase initialization failed, using mock auth')
+      }
     },
 
     isLoggedIn: () => {

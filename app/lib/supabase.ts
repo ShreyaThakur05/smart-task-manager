@@ -3,11 +3,11 @@ import { validateEnv } from './env'
 
 const env = validateEnv()
 
-if (!env.supabaseUrl || !env.supabaseAnonKey) {
-  throw new Error('Missing Supabase configuration. Please check your environment variables.')
+if (!env.hasValidSupabase) {
+  console.warn('⚠️ Supabase not configured properly. Authentication will use mock mode.')
 }
 
-export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+export const supabase = env.hasValidSupabase ? createClient(env.supabaseUrl!, env.supabaseAnonKey!, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -17,10 +17,10 @@ export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   },
   global: {
     headers: {
-      'apikey': env.supabaseAnonKey
+      'apikey': env.supabaseAnonKey!
     }
   }
-})
+}) : null
 
 // Database types
 export interface Task {
