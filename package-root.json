@@ -1,0 +1,8 @@
+{
+  "name": "smart-task-manager-root",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Build handled by client directory'",
+    "dev": "echo 'Development handled by client directory'"
+  }
+}

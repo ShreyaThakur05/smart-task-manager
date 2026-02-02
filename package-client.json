@@ -1,18 +1,18 @@
 {
-  "name": "smart-task-manager",
-  "version": "1.0.0",
-  "description": "AI-powered task management platform inspired by Trello",
+  "name": "client",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:3001": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
-    "@dnd-kit/sortable": "^8.0.0",
     "@google/generative-ai": "^0.21.0",
+    "@dnd-kit/sortable": "^8.0.0",
     "@supabase/supabase-js": "^2.39.0",
     "framer-motion": "^10.16.0",
     "lucide-react": "^0.400.0",
