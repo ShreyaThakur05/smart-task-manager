@@ -44,6 +44,13 @@ const defaultLists = [
   { id: 'done', title: 'Done' }
 ]
 
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+}
+
 export const useTaskStore = create<TaskState>()(persist(
   (set, get) => ({
     tasks: [],
@@ -54,7 +61,7 @@ export const useTaskStore = create<TaskState>()(persist(
     addTask: async (taskData) => {
       const newTask: Task = {
         ...taskData,
-        id: crypto.randomUUID(),
+        id: generateId(),
         user_id: 'local-user',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -66,7 +73,7 @@ export const useTaskStore = create<TaskState>()(persist(
 
     addList: async (title) => {
       const newList = { 
-        id: crypto.randomUUID(), 
+        id: generateId(), 
         title: title.trim(),
         user_id: 'local-user',
         created_at: new Date().toISOString()

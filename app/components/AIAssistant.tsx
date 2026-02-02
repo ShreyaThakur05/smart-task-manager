@@ -48,8 +48,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           labels: parsed.labels || [],
           subtasks: [],
           comments: [],
-          attachments: [],
-          listId: parsed.listId || 'backlog'
+          attachments: []
         }
       } catch (error) {
         return parseTaskSimple(text)
@@ -151,14 +150,14 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         labels,
         subtasks: [],
         comments: [],
-        attachments: [],
-        listId: matchedListId
+        attachments: []
       }
     }
 
     try {
       const taskData = await parseTask(input)
-      addTask(taskData)
+      const { listId, ...cleanTaskData } = taskData
+      await addTask(cleanTaskData)
       setInput('')
       
       // Simulate processing time
