@@ -14,8 +14,8 @@ interface Task {
   assignee?: string
   dueDate?: string
   labels: string[]
-  subtasks: { id: string; text: string; completed: boolean }[]
-  comments: { id: string; text: string; author: string; timestamp: string }[]
+  subtasks?: { id: string; text: string; completed: boolean }[]
+  comments?: { id: string; text: string; author: string; timestamp: string }[]
   attachments: string[]
   created_at: string
   updated_at: string
@@ -54,7 +54,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
     }
     
     updateTask(task.id, {
-      comments: [...task.comments, comment]
+      comments: [...(task.comments || []), comment]
     })
     setNewComment('')
   }
@@ -69,13 +69,13 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
     }
     
     updateTask(task.id, {
-      subtasks: [...task.subtasks, subtask]
+      subtasks: [...(task.subtasks || []), subtask]
     })
     setNewSubtask('')
   }
 
   const toggleSubtask = (subtaskId: string) => {
-    const updatedSubtasks = task.subtasks.map(st =>
+    const updatedSubtasks = (task.subtasks || []).map(st =>
       st.id === subtaskId ? { ...st, completed: !st.completed } : st
     )
     updateTask(task.id, { subtasks: updatedSubtasks })
@@ -209,7 +209,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Subtasks</h3>
                     <div className="space-y-2">
-                      {task.subtasks.map((subtask) => (
+                      {(task.subtasks || []).map((subtask) => (
                         <div key={subtask.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
                           <button
                             onClick={() => toggleSubtask(subtask.id)}
@@ -255,7 +255,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Comments</h3>
                     <div className="space-y-3">
-                      {task.comments.map((comment) => (
+                      {(task.comments || []).map((comment) => (
                         <div key={comment.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                             {comment.author.charAt(0)}
@@ -327,7 +327,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       Labels
                     </h4>
                     <div className="flex flex-wrap gap-1">
-                      {task.labels.map((label, index) => (
+                      {(task.labels || []).map((label, index) => (
                         <span
                           key={index}
                           className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
@@ -335,7 +335,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                           {label}
                         </span>
                       ))}
-                      {task.labels.length === 0 && (
+                      {(task.labels || []).length === 0 && (
                         <span className="text-gray-500 dark:text-gray-400 text-sm">No labels</span>
                       )}
                     </div>
@@ -347,11 +347,11 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       <Paperclip className="w-4 h-4" />
                       Attachments
                     </h4>
-                    {task.attachments.length === 0 ? (
+                    {(task.attachments || []).length === 0 ? (
                       <span className="text-gray-500 dark:text-gray-400 text-sm">No attachments</span>
                     ) : (
                       <div className="space-y-2">
-                        {task.attachments.map((attachment, index) => (
+                        {(task.attachments || []).map((attachment, index) => (
                           <div
                             key={index}
                             className="block p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
