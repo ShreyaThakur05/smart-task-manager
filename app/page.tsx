@@ -76,6 +76,7 @@ export default function Home() {
 
   const filteredTasks = getFilteredTasks()
   const tasksByStatus = {
+    'yet-to-start': filteredTasks.filter(t => t.status === 'yet-to-start'),
     backlog: filteredTasks.filter(t => t.status === 'backlog'),
     'in-progress': filteredTasks.filter(t => t.status === 'in-progress'),
     review: filteredTasks.filter(t => t.status === 'review'),
@@ -91,7 +92,7 @@ export default function Home() {
     title: 'My Board',
     lists: lists.length > 0 ? lists.map(list => {
       // For default lists, filter by status
-      if (['backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
+      if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
         return {
           ...list,
           cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
@@ -107,6 +108,7 @@ export default function Home() {
         })
       }
     }) : [
+      { id: 'yet-to-start', title: 'Yet to Start', cards: tasksByStatus['yet-to-start'] || [] },
       { id: 'backlog', title: 'Backlog', cards: tasksByStatus.backlog || [] },
       { id: 'in-progress', title: 'In Progress', cards: tasksByStatus['in-progress'] || [] },
       { id: 'review', title: 'Review', cards: tasksByStatus.review || [] },

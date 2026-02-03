@@ -6,9 +6,10 @@ interface Task {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
+  startDate?: string
   assignee?: string
   created_at: string
   updated_at: string
@@ -38,6 +39,7 @@ interface TaskState {
 }
 
 const defaultLists = [
+  { id: 'yet-to-start', title: 'Yet to Start' },
   { id: 'backlog', title: 'Backlog' },
   { id: 'in-progress', title: 'In Progress' },
   { id: 'review', title: 'Review' },
@@ -68,6 +70,19 @@ export const useTaskStore = create<TaskState>()(persist(
         attachments: taskData.attachments || []
       }
       
+      // Auto-move based on start date
+      if (newTask.startDate) {
+        const startDate = new Date(newTask.startDate)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        if (startDate > today) {
+          newTask.status = 'yet-to-start'
+        } else if (startDate <= today) {
+          newTask.status = 'in-progress'
+        }
+      }
+      
       set(state => ({ tasks: [newTask, ...state.tasks] }))
     },
 
@@ -83,7 +98,7 @@ export const useTaskStore = create<TaskState>()(persist(
     },
 
     deleteList: async (id) => {
-      const defaultIds = ['backlog', 'in-progress', 'review', 'done']
+      const defaultIds = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done']
       if (defaultIds.includes(id)) return
       
       set(state => ({ lists: state.lists.filter(list => list.id !== id) }))

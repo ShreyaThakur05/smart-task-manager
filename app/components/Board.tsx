@@ -67,7 +67,8 @@ export default function Board({ board, moveTask }: BoardProps) {
     if (activeCard && moveTask) {
       const targetList = board.lists.find(list => list.id === overId)
       if (targetList) {
-        const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+        const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+          'yet-to-start': 'yet-to-start',
           'backlog': 'backlog',
           'in-progress': 'in-progress', 
           'review': 'review',

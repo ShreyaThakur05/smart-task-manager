@@ -40,7 +40,7 @@ export default function List({ list }: ListProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { addTask, deleteList } = useTaskStore()
   
-  const isDefaultList = ['backlog', 'in-progress', 'review', 'done'].includes(list.id)
+  const isDefaultList = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)
   
   const {
     attributes,
@@ -68,6 +68,7 @@ export default function List({ list }: ListProps) {
 
   const getListColor = (title: string) => {
     switch (title.toLowerCase()) {
+      case 'yet to start': return 'border-t-purple-500 bg-purple-50 dark:bg-purple-900/20'
       case 'backlog': return 'border-t-slate-500 bg-slate-50 dark:bg-slate-900/20'
       case 'in progress': return 'border-t-blue-500 bg-blue-50 dark:bg-blue-900/20'
       case 'review': return 'border-t-amber-500 bg-amber-50 dark:bg-amber-900/20'
@@ -78,6 +79,7 @@ export default function List({ list }: ListProps) {
 
   const getListIcon = (title: string) => {
     switch (title.toLowerCase()) {
+      case 'yet to start': return <Clock className="w-4 h-4 text-purple-500" />
       case 'backlog': return <Circle className="w-4 h-4 text-gray-500" />
       case 'in progress': return <Clock className="w-4 h-4 text-blue-500" />
       case 'review': return <AlertCircle className="w-4 h-4 text-yellow-500" />
@@ -89,7 +91,8 @@ export default function List({ list }: ListProps) {
   const handleAddCard = async () => {
     if (!newCardTitle.trim()) return
     
-    const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+    const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+      'yet to start': 'yet-to-start',
       'backlog': 'backlog',
       'in progress': 'in-progress',
       'review': 'review',
@@ -101,7 +104,7 @@ export default function List({ list }: ListProps) {
         title: newCardTitle,
         description: '',
         priority: 'medium',
-        status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
+        status: ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) 
           ? statusMap[list.title.toLowerCase()] || 'backlog'
           : 'backlog',
         labels: []
@@ -189,7 +192,7 @@ export default function List({ list }: ListProps) {
       </div>
       
       {/* Cards Container */}
-      {!isCollapsed && (
+      {!isCollapsed ? (
         <div 
           ref={setDroppableRef}
           className="px-4 pb-4 space-y-3 max-h-96 overflow-y-auto min-h-[100px]"
@@ -256,6 +259,18 @@ export default function List({ list }: ListProps) {
             </div>
           )}
         </div>
+      ) : (
+        /* Collapsed State - Show list name covering tasks */
+        <div className="px-4 pb-4">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg p-6 text-center">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-300 text-lg mb-1">
+              {list.title}
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {list.cards.length} {list.cards.length === 1 ? 'task' : 'tasks'}
+            </p>
+          </div>
+        </div>
       )}
       
       {/* Floating Quick Add Button */}
@@ -276,7 +291,8 @@ export default function List({ list }: ListProps) {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus={(() => {
-          const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+          const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+            'yet to start': 'yet-to-start',
             'backlog': 'backlog',
             'in progress': 'in-progress', 
             'review': 'review',

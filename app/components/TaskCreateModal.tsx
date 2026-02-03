@@ -18,6 +18,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium')
   const [status, setStatus] = useState(defaultStatus)
   const [assignee, setAssignee] = useState('')
+  const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [labels, setLabels] = useState<string[]>([])
   const [newLabel, setNewLabel] = useState('')
@@ -41,6 +42,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
         priority,
         status,
         assignee: assignee.trim() || undefined,
+        startDate: startDate || undefined,
         dueDate: dueDate || undefined,
         labels: [...labels, ...(timeEstimate ? [`estimate-${timeEstimate}`] : [])],
         attachments: attachmentNames
@@ -52,6 +54,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
       setPriority('medium')
       setStatus(defaultStatus)
       setAssignee('')
+      setStartDate('')
       setDueDate('')
       setLabels([])
       setNewLabel('')
@@ -93,6 +96,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
   ]
 
   const statusOptions = [
+    { value: 'yet-to-start', label: 'Yet to Start' },
     { value: 'backlog', label: 'Backlog' },
     { value: 'in-progress', label: 'In Progress' },
     { value: 'review', label: 'Review' },
@@ -246,21 +250,20 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
                 </div>
               </div>
 
-              {/* Assignee and Due Date */}
+              {/* Start Date and Due Date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Assignee */}
+                {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    Assignee
+                    Start Date
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
-                      type="text"
-                      value={assignee}
-                      onChange={(e) => setAssignee(e.target.value)}
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Assign to..."
                     />
                   </div>
                 </div>
@@ -276,7 +279,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={startDate || new Date().toISOString().split('T')[0]}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

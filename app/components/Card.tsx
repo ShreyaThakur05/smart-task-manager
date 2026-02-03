@@ -78,7 +78,7 @@ export default function Card({ card }: CardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => setSelectedTask(card as any)}
-      className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 group relative overflow-visible hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gradient-to-br hover:from-blue-50/30 hover:to-indigo-50/30 dark:hover:from-blue-900/10 dark:hover:to-indigo-900/10 ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-gradient-to-r hover:from-blue-400 hover:to-indigo-500 group relative overflow-visible hover:bg-gradient-to-br hover:from-blue-100/40 hover:to-purple-100/40 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 transform hover:scale-[1.02] ${isDragging ? 'opacity-50' : ''}`}
     >
       {/* Card Cover */}
       {card.cover && (
@@ -168,24 +168,24 @@ export default function Card({ card }: CardProps) {
           <div className="flex flex-wrap gap-1.5">
             {card.labels.slice(0, 3).map((label, index) => {
               const colors = [
-                'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-200',
-                'bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200',
-                'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200',
-                'bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-200',
-                'bg-gradient-to-r from-rose-50 to-pink-50 text-rose-700 border-rose-200',
-                'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 border-indigo-200'
+                'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-lg',
+                'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg',
+                'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg',
+                'bg-gradient-to-r from-orange-400 to-red-500 text-white shadow-lg',
+                'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-lg',
+                'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
               ]
               return (
                 <span
                   key={index}
-                  className={`px-2.5 py-1 text-xs rounded-full font-medium border ${colors[index % colors.length]} dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800`}
+                  className={`px-3 py-1.5 text-xs rounded-full font-semibold ${colors[index % colors.length]} transform hover:scale-105 transition-transform`}
                 >
                   {label}
                 </span>
               )
             })}
             {card.labels.length > 3 && (
-              <span className="px-2.5 py-1 bg-gradient-to-r from-gray-50 to-slate-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full border border-gray-200 dark:border-gray-600">
+              <span className="px-3 py-1.5 bg-gradient-to-r from-gray-400 to-slate-500 text-white text-xs rounded-full font-semibold shadow-lg">
                 +{card.labels.length - 3}
               </span>
             )}
@@ -200,11 +200,13 @@ export default function Card({ card }: CardProps) {
                 {completedSubtasks}/{totalSubtasks} tasks
               </span>
             </div>
-            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 dark:bg-gray-700 rounded-full h-2 shadow-inner">
+            <div className="w-full bg-gradient-to-r from-gray-200 to-gray-300 dark:bg-gray-700 rounded-full h-2.5 shadow-inner">
               <div
-                className="bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 h-2 rounded-full transition-all duration-500 shadow-sm"
+                className="bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 h-2.5 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden"
                 style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
+              </div>
             </div>
           </div>
         )}
