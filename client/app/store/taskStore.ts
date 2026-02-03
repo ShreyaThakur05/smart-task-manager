@@ -54,8 +54,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   addTask: async (taskData) => {
     const { user } = useAuthStore.getState()
     if (!user) {
-      console.error('No user found')
-      return
+      throw new Error('You must be logged in to create tasks')
     }
 
     const { listId, ...cleanTaskData } = taskData as any
@@ -87,7 +86,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       
       if (error) {
         console.error('Supabase error:', error)
-        throw error
+        throw new Error(`Database error: ${error.message}`)
       }
       
       set(state => ({ tasks: [newTask, ...state.tasks] }))

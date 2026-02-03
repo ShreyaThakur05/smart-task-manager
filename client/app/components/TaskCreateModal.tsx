@@ -61,9 +61,9 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
       setCategory('')
       
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create task:', error)
-      alert('Failed to create task. Please try again.')
+      alert(`Failed to create task: ${error?.message || 'Unknown error'}`)
     }
   }
 

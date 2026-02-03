@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -13,7 +12,7 @@ interface AuthState {
   isLoggedIn: () => boolean
 }
 
-export const useAuthStore = create<AuthState>()(persist(
+export const useAuthStore = create<AuthState>()(
   (set, get) => ({
     user: null,
     loading: true,
@@ -74,22 +73,23 @@ export const useAuthStore = create<AuthState>()(persist(
     initialize: async () => {
       set({ loading: true })
       
-      const { data: { session } } = await supabase.auth.getSession()
-      set({ user: session?.user || null, loading: false })
-      
-      // Listen for auth changes
-      supabase.auth.onAuthStateChange((event, session) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         set({ user: session?.user || null, loading: false })
-      })
+        
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange((event, session) => {
+          set({ user: session?.user || null, loading: false })
+        })
+      } catch (error) {
+        console.error('Auth initialization failed:', error)
+        set({ user: null, loading: false })
+      }
     },
 
     isLoggedIn: () => {
       const state = get()
       return !!state.user
     }
-  }),
-  { 
-    name: 'auth-store',
-    partialize: (state) => ({ user: state.user })
-  }
-))
+  })
+)
