@@ -17,8 +17,8 @@ interface Task {
   subtasks: { id: string; text: string; completed: boolean }[]
   comments: { id: string; text: string; author: string; timestamp: string }[]
   attachments: string[]
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
 }
 
 interface TaskDetailModalProps {
