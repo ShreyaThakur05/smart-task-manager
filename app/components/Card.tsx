@@ -78,7 +78,7 @@ export default function Card({ card }: CardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => setSelectedTask(card as any)}
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 dark:border-gray-700 group relative ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 dark:border-gray-700 group relative overflow-visible ${isDragging ? 'opacity-50' : ''}`}
     >
       {/* Card Cover */}
       {card.cover && (
@@ -108,7 +108,7 @@ export default function Card({ card }: CardProps) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: isHovered ? 1 : 0 }}
-            className="relative ml-2"
+            className="relative ml-2 z-10"
           >
             <button
               className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -121,30 +121,42 @@ export default function Card({ card }: CardProps) {
             </button>
             
             {showCardMenu && (
-              <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 w-48 z-50">
-                <button
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-40" 
                   onClick={(e) => {
                     e.stopPropagation()
-                    setSelectedTask(card as any)
                     setShowCardMenu(false)
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit Card
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteTask(card.id)
-                    setShowCardMenu(false)
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Card
-                </button>
-              </div>
+                />
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 w-48 z-50 min-w-max">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedTask(card as any)
+                      setShowCardMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Card
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteTask(card.id)
+                      setShowCardMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Card
+                  </button>
+                </div>
+              </>
             )}
           </motion.div>
         </div>
@@ -228,14 +240,7 @@ export default function Card({ card }: CardProps) {
           </div>
         </div>
       </div>
-      
-      {/* Click outside to close menu */}
-      {showCardMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowCardMenu(false)}
-        />
-      )}
+
     </motion.div>
   )
 }
