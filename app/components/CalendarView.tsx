@@ -2,18 +2,37 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
+import TaskCreateModal from './TaskCreateModal'
 
 export default function CalendarView() {
-  const { tasks, setSelectedTask } = useTaskStore()
+  const { getFilteredTasks } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [showTaskModal, setShowTaskModal] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string>('')
 
-  const today = new Date()
-  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-  const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-  const firstDayOfWeek = firstDayOfMonth.getDay()
-  const daysInMonth = lastDayOfMonth.getDate()
+  const tasks = getFilteredTasks(activeSheetId)
+  
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  }
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+  }
+
+  const getTasksForDate = (date: string) => {
+    return tasks.filter(task => 
+      task.dueDate === date || task.startDate === date
+    )
+  }
+
+  const formatDate = (year: number, month: number, day: number) => {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  }
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -22,195 +41,116 @@ export default function CalendarView() {
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate)
-    if (direction === 'prev') {
-      newDate.setMonth(newDate.getMonth() - 1)
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1)
-    }
-    setCurrentDate(newDate)
+  const daysInMonth = getDaysInMonth(currentDate)
+  const firstDay = getFirstDayOfMonth(currentDate)
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+
+  const previousMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1))
   }
 
-  const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => {
-      if (!task.dueDate) return false
-      const taskDate = new Date(task.dueDate)
-      return taskDate.toDateString() === date.toDateString()
-    })
+  const nextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1))
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-500'
-      case 'high': return 'bg-orange-500'
-      case 'medium': return 'bg-yellow-500'
-      case 'low': return 'bg-green-500'
-      default: return 'bg-gray-500'
-    }
-  }
-
-  const renderCalendarDays = () => {
-    const days = []
-    
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(
-        <div key={`empty-${i}`} className="h-32 bg-gray-50 dark:bg-gray-800/50" />
-      )
-    }
-
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-      const tasksForDay = getTasksForDate(date)
-      const isToday = date.toDateString() === today.toDateString()
-      const isPast = date < today && !isToday
-
-      days.push(
-        <motion.div
-          key={day}
-          whileHover={{ scale: 1.02 }}
-          className={`h-32 border border-gray-200 dark:border-gray-700 p-2 cursor-pointer transition-colors ${
-            isToday 
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' 
-              : isPast 
-                ? 'bg-gray-50 dark:bg-gray-800/50' 
-                : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${
-              isToday 
-                ? 'text-blue-600 dark:text-blue-400' 
-                : isPast 
-                  ? 'text-gray-400 dark:text-gray-500' 
-                  : 'text-gray-900 dark:text-white'
-            }`}>
-              {day}
-            </span>
-            {tasksForDay.length > 0 && (
-              <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 rounded">
-                {tasksForDay.length}
-              </span>
-            )}
-          </div>
-          
-          <div className="space-y-1 overflow-hidden">
-            {tasksForDay.slice(0, 3).map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedTask(task)
-                }}
-                className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity ${
-                  task.status === 'done' 
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 line-through' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
-                  <span className="truncate">{task.title}</span>
-                </div>
-              </motion.div>
-            ))}
-            {tasksForDay.length > 3 && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                +{tasksForDay.length - 3} more
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )
-    }
-
-    return days
+  const handleDateClick = (day: number) => {
+    const dateStr = formatDate(year, month, day)
+    setSelectedDate(dateStr)
+    setShowTaskModal(true)
   }
 
   return (
-    <div className="h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
       {/* Calendar Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </h3>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => navigateMonth('prev')}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date())}
-                className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Today
-              </button>
-              <button
-                onClick={() => navigateMonth('next')}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-            <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">Add Event</span>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {monthNames[month]} {year}
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={previousMonth}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <button
+            onClick={nextMonth}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 p-4 overflow-auto">
+      <div className="grid grid-cols-7 gap-1">
         {/* Day Headers */}
-        <div className="grid grid-cols-7 gap-0 mb-2">
-          {dayNames.map((day) => (
-            <div
-              key={day}
-              className="h-8 flex items-center justify-center text-sm font-medium text-gray-500 dark:text-gray-400"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
+        {dayNames.map(day => (
+          <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+            {day}
+          </div>
+        ))}
+
+        {/* Empty cells for days before month starts */}
+        {Array.from({ length: firstDay }, (_, i) => (
+          <div key={`empty-${i}`} className="p-3 h-24" />
+        ))}
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-0 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          {renderCalendarDays()}
-        </div>
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1
+          const dateStr = formatDate(year, month, day)
+          const dayTasks = getTasksForDate(dateStr)
+          const isToday = new Date().toDateString() === new Date(year, month, day).toDateString()
+
+          return (
+            <motion.div
+              key={day}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => handleDateClick(day)}
+              className={`p-2 h-24 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                isToday ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' : ''
+              }`}
+            >
+              <div className={`text-sm font-medium mb-1 ${
+                isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+              }`}>
+                {day}
+              </div>
+              <div className="space-y-1">
+                {dayTasks.slice(0, 2).map(task => (
+                  <div
+                    key={task.id}
+                    className={`text-xs p-1 rounded truncate ${
+                      task.status === 'done' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                        : task.priority === 'urgent'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                    }`}
+                  >
+                    {task.title}
+                  </div>
+                ))}
+                {dayTasks.length > 2 && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    +{dayTasks.length - 2} more
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
 
-      {/* Calendar Legend */}
-      <div className="px-4 pb-4 flex-shrink-0">
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full" />
-            <span className="text-gray-600 dark:text-gray-300">Urgent</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500 rounded-full" />
-            <span className="text-gray-600 dark:text-gray-300">High</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-            <span className="text-gray-600 dark:text-gray-300">Medium</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-gray-600 dark:text-gray-300">Low</span>
-          </div>
-        </div>
-      </div>
+      {/* Task Create Modal */}
+      <TaskCreateModal
+        isOpen={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        defaultStatus="backlog"
+        sheetId={activeSheetId}
+      />
     </div>
   )
 }

@@ -2,15 +2,17 @@
 
 import { useTaskStore } from './store/taskStore'
 import { useAuthStore } from './store/authStore'
+import { useSheetStore } from './store/sheetStore'
 import AuthForm from './components/AuthForm'
 import Board from './components/Board'
 import TableView from './components/TableView'
 import CalendarView from './components/CalendarView'
-import DashboardView from './components/DashboardView'
+import TimelineView from './components/TimelineView'
 import ThemeToggle from './components/ThemeToggle'
 import TaskDetailModal from './components/TaskDetailModal'
 import TaskCreateModal from './components/TaskCreateModal'
 import AIAssistant from './components/AIAssistant'
+import SheetTabs from './components/SheetTabs'
 import { useState, useEffect } from 'react'
 import { Plus, LayoutGrid, List, Calendar, BarChart3, Zap, LogOut, Bot, User } from 'lucide-react'
 
@@ -33,6 +35,7 @@ type Task = {
 
 export default function Home() {
   const authStore = useAuthStore()
+  const { activeSheetId, getActiveSheet } = useSheetStore()
   const { 
     tasks, 
     lists, 
@@ -41,6 +44,7 @@ export default function Home() {
     selectedTask, 
     setSelectedTask, 
     getFilteredTasks, 
+    getFilteredLists,
     addTask, 
     moveTask, 
     loadData
@@ -48,6 +52,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
+
+  const activeSheet = getActiveSheet()
 
   useEffect(() => {
     setMounted(true)
@@ -74,7 +80,8 @@ export default function Home() {
     return <AuthForm />
   }
 
-  const filteredTasks = getFilteredTasks()
+  const filteredTasks = getFilteredTasks(activeSheetId)
+  const filteredLists = getFilteredLists(activeSheetId)
   const tasksByStatus = {
     'yet-to-start': filteredTasks.filter(t => t.status === 'yet-to-start'),
     backlog: filteredTasks.filter(t => t.status === 'backlog'),
@@ -89,8 +96,8 @@ export default function Home() {
 
   const boardData = {
     id: '1',
-    title: 'My Board',
-    lists: lists.length > 0 ? lists.map(list => {
+    title: activeSheet?.name || 'My Board',
+    lists: filteredLists.map(list => {
       // For default lists, filter by status
       if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
         return {
@@ -98,22 +105,12 @@ export default function Home() {
           cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
         }
       }
-      // For custom lists, show all tasks (they use backlog status but belong to custom list)
+      // For custom lists, show tasks assigned to this list
       return {
         ...list,
-        cards: filteredTasks.filter(task => {
-          // Custom logic: tasks created in custom lists should appear there
-          // For now, show tasks with backlog status in custom lists too
-          return task.status === 'backlog'
-        })
+        cards: filteredTasks.filter(task => task.status === 'backlog') // Custom lists use backlog status
       }
-    }) : [
-      { id: 'yet-to-start', title: 'Yet to Start', cards: tasksByStatus['yet-to-start'] || [] },
-      { id: 'backlog', title: 'Backlog', cards: tasksByStatus.backlog || [] },
-      { id: 'in-progress', title: 'In Progress', cards: tasksByStatus['in-progress'] || [] },
-      { id: 'review', title: 'Review', cards: tasksByStatus.review || [] },
-      { id: 'done', title: 'Done', cards: tasksByStatus.done || [] }
-    ]
+    })
   }
 
   return (
@@ -127,7 +124,9 @@ export default function Home() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Tasks</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              {activeSheet?.icon} {activeSheet?.name || 'Smart Tasks'}
+            </h1>
           </div>
           
           <div className="flex items-center gap-4">
@@ -146,6 +145,9 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Sheet Tabs */}
+      <SheetTabs />
 
       {/* Toolbar - Fixed */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-16 z-30">
@@ -212,7 +214,7 @@ export default function Home() {
           {view === 'board' && <Board board={boardData} moveTask={handleMoveTask} />}
           {view === 'list' && <TableView />}
           {view === 'calendar' && <CalendarView />}
-          {view === 'timeline' && <DashboardView />}
+          {view === 'timeline' && <TimelineView />}
         </div>
       </main>
 
@@ -268,6 +270,7 @@ export default function Home() {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus="backlog"
+        sheetId={activeSheetId}
       />
       
       {showAIAssistant && (

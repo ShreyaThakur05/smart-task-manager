@@ -6,6 +6,7 @@ import { Bot, Send, Sparkles, X } from 'lucide-react'
 
 
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 
 interface AIAssistantProps {
   isOpen: boolean
@@ -15,7 +16,10 @@ interface AIAssistantProps {
 export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
-  const { addTask, lists } = useTaskStore()
+  const { addTask, getFilteredLists } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
+  
+  const lists = getFilteredLists(activeSheetId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -157,7 +161,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     try {
       const taskData = await parseTask(input)
       const { listId, ...cleanTaskData } = taskData
-      await addTask(cleanTaskData)
+      await addTask(cleanTaskData, activeSheetId)
       setInput('')
       
       // Simulate processing time

@@ -8,11 +8,12 @@ import { useTaskStore } from '../store/taskStore'
 interface TaskCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  defaultStatus?: 'backlog' | 'in-progress' | 'review' | 'done'
+  defaultStatus?: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   defaultListId?: string
+  sheetId?: string
 }
 
-export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'backlog', defaultListId }: TaskCreateModalProps) {
+export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'backlog', defaultListId, sheetId }: TaskCreateModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium')
@@ -46,7 +47,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
         dueDate: dueDate || undefined,
         labels: [...labels, ...(timeEstimate ? [`estimate-${timeEstimate}`] : [])],
         attachments: attachmentNames
-      })
+      }, sheetId)
 
       // Reset form
       setTitle('')

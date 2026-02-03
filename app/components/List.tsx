@@ -7,6 +7,7 @@ import { Plus, MoreHorizontal, Circle, Clock, CheckCircle, AlertCircle, Edit, Tr
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 import Card from './Card'
 import TaskCreateModal from './TaskCreateModal'
 import { AnimatePresence } from 'framer-motion'
@@ -39,6 +40,7 @@ export default function List({ list }: ListProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { addTask, deleteList } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
   
   const isDefaultList = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)
   
@@ -108,7 +110,7 @@ export default function List({ list }: ListProps) {
           ? statusMap[list.title.toLowerCase()] || 'backlog'
           : 'backlog',
         labels: []
-      })
+      }, activeSheetId)
       
       setNewCardTitle('')
       setShowAddCard(false)
@@ -301,6 +303,7 @@ export default function List({ list }: ListProps) {
           return statusMap[list.title.toLowerCase()] || 'backlog'
         })()}
         defaultListId={list.id}
+        sheetId={activeSheetId}
       />
       
       {/* Delete Confirmation Modal */}

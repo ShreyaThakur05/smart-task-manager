@@ -14,6 +14,7 @@ interface Task {
   created_at: string
   updated_at: string
   user_id?: string
+  sheet_id?: string
   attachments?: string[]
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]
@@ -21,19 +22,20 @@ interface Task {
 
 interface TaskState {
   tasks: Task[]
-  lists: { id: string; title: string; user_id?: string; created_at?: string }[]
+  lists: { id: string; title: string; user_id?: string; sheet_id?: string; created_at?: string }[]
   view: 'board' | 'list' | 'calendar' | 'timeline'
   selectedTask: Task | null
   
-  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<void>
-  addList: (title: string) => Promise<void>
+  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>, sheetId?: string) => Promise<void>
+  addList: (title: string, sheetId?: string) => Promise<void>
   deleteList: (id: string) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   moveTask: (id: string, newStatus: Task['status']) => Promise<void>
   setView: (view: TaskState['view']) => void
   setSelectedTask: (task: Task | null) => void
-  getFilteredTasks: () => Task[]
+  getFilteredTasks: (sheetId?: string) => Task[]
+  getFilteredLists: (sheetId?: string) => { id: string; title: string; user_id?: string; sheet_id?: string; created_at?: string }[]
   loadData: () => Promise<void>
   saveData: () => Promise<void>
 }
@@ -60,11 +62,12 @@ export const useTaskStore = create<TaskState>()(persist(
     view: 'board',
     selectedTask: null,
 
-    addTask: async (taskData) => {
+    addTask: async (taskData, sheetId) => {
       const newTask: Task = {
         ...taskData,
         id: generateId(),
         user_id: 'local-user',
+        sheet_id: sheetId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         attachments: taskData.attachments || []
@@ -86,11 +89,12 @@ export const useTaskStore = create<TaskState>()(persist(
       set(state => ({ tasks: [newTask, ...state.tasks] }))
     },
 
-    addList: async (title) => {
+    addList: async (title, sheetId) => {
       const newList = { 
         id: generateId(), 
         title: title.trim(),
         user_id: 'local-user',
+        sheet_id: sheetId,
         created_at: new Date().toISOString()
       }
       
@@ -129,7 +133,22 @@ export const useTaskStore = create<TaskState>()(persist(
 
     setView: (view) => set({ view }),
     setSelectedTask: (task) => set({ selectedTask: task }),
-    getFilteredTasks: () => get().tasks,
+    getFilteredTasks: (sheetId) => {
+      const tasks = get().tasks
+      return sheetId ? tasks.filter(task => task.sheet_id === sheetId) : tasks
+    },
+    getFilteredLists: (sheetId) => {
+      const lists = get().lists
+      const defaultLists = [
+        { id: 'yet-to-start', title: 'Yet to Start', sheet_id: sheetId },
+        { id: 'backlog', title: 'Backlog', sheet_id: sheetId },
+        { id: 'in-progress', title: 'In Progress', sheet_id: sheetId },
+        { id: 'review', title: 'Review', sheet_id: sheetId },
+        { id: 'done', title: 'Done', sheet_id: sheetId }
+      ]
+      const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists
+      return [...defaultLists, ...customLists]
+    },
     loadData: async () => {},
     saveData: async () => {}
   }),
