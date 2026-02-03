@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTaskStore } from '../store/taskStore'
+import TaskCreateModal from './TaskCreateModal'
 
 export default function CalendarView() {
   const { tasks, setSelectedTask } = useTaskStore()
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [showTaskModal, setShowTaskModal] = useState(false)
 
   const today = new Date()
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
@@ -163,7 +165,10 @@ export default function CalendarView() {
             </div>
           </div>
           
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+          <button 
+            onClick={() => setShowTaskModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
             <Plus className="w-4 h-4" />
             <span className="text-sm font-medium">Add Event</span>
           </button>
@@ -211,6 +216,15 @@ export default function CalendarView() {
           </div>
         </div>
       </div>
+      
+      {/* Task Create Modal */}
+      {showTaskModal && (
+        <TaskCreateModal
+          isOpen={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+          defaultStatus="backlog"
+        />
+      )}
     </div>
   )
 }

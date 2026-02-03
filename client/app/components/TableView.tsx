@@ -10,6 +10,12 @@ export default function TableView() {
   const [sortField, setSortField] = useState<string>('createdAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedRows, setSelectedRows] = useState<string[]>([])
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    status: '',
+    priority: '',
+    assignee: ''
+  })
 
   const columns = [
     { key: 'title', label: 'Task', sortable: true },
@@ -31,7 +37,39 @@ export default function TableView() {
     }
   }
 
-  const sortedTasks = [...tasks].sort((a, b) => {
+  const exportToCSV = () => {
+    const headers = ['Title', 'Status', 'Priority', 'Assignee', 'Due Date', 'Labels']
+    const csvData = [headers]
+    
+    filteredTasks.forEach(task => {
+      csvData.push([
+        task.title,
+        task.status,
+        task.priority,
+        task.assignee || '',
+        task.dueDate || '',
+        task.labels.join('; ')
+      ])
+    })
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'tasks.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    if (filters.status && task.status !== filters.status) return false
+    if (filters.priority && task.priority !== filters.priority) return false
+    if (filters.assignee && task.assignee !== filters.assignee) return false
+    return true
+  })
+
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
     let aValue: any = a[sortField as keyof typeof a]
     let bValue: any = b[sortField as keyof typeof b]
     
@@ -82,17 +120,60 @@ export default function TableView() {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Table View</h3>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
               <Filter className="w-4 h-4" />
               <span className="text-sm">Filter</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button 
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
               <Download className="w-4 h-4" />
               <span className="text-sm">Export</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters({...filters, status: e.target.value})}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="">All Status</option>
+              <option value="backlog">Backlog</option>
+              <option value="in-progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+            <select
+              value={filters.priority}
+              onChange={(e) => setFilters({...filters, priority: e.target.value})}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="">All Priority</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Filter by assignee"
+              value={filters.assignee}
+              onChange={(e) => setFilters({...filters, assignee: e.target.value})}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto">
