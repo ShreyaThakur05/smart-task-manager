@@ -51,11 +51,13 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true)
-    authStore.initialize()
+    if (typeof window !== 'undefined') {
+      authStore.initialize()
+    }
   }, [])
 
   useEffect(() => {
-    if (mounted && authStore.user) {
+    if (mounted && authStore.user && typeof window !== 'undefined') {
       loadData()
     }
   }, [mounted, authStore.user])

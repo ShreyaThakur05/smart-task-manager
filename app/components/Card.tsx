@@ -78,7 +78,7 @@ export default function Card({ card }: CardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => setSelectedTask(card as any)}
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 dark:border-gray-700 group relative overflow-visible ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-700 group relative overflow-visible hover:border-blue-200 dark:hover:border-blue-600 ${isDragging ? 'opacity-50' : ''}`}
     >
       {/* Card Cover */}
       {card.cover && (
@@ -106,12 +106,14 @@ export default function Card({ card }: CardProps) {
           </div>
           
           <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: isHovered ? 1 : 0 }}
             className="relative ml-2 z-10"
           >
             <button
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 setShowCardMenu(!showCardMenu)
@@ -163,17 +165,17 @@ export default function Card({ card }: CardProps) {
 
         {/* Labels */}
         {card.labels && card.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {card.labels.slice(0, 3).map((label, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium"
+                className="px-2.5 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-xs rounded-full font-medium border border-blue-100 dark:border-blue-800"
               >
                 {label}
               </span>
             ))}
             {card.labels.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">
+              <span className="px-2.5 py-1 bg-gradient-to-r from-gray-50 to-slate-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full border border-gray-200 dark:border-gray-600">
                 +{card.labels.length - 3}
               </span>
             )}
@@ -188,9 +190,9 @@ export default function Card({ card }: CardProps) {
                 {completedSubtasks}/{totalSubtasks} tasks
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
               <div
-                className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-emerald-500 to-green-500 h-2 rounded-full transition-all duration-500 shadow-sm"
                 style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
               />
             </div>
@@ -202,7 +204,7 @@ export default function Card({ card }: CardProps) {
           {/* Left side - Assignee */}
           <div className="flex items-center">
             {card.assignee && (
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-sm border-2 border-white dark:border-gray-800">
                 {card.assignee.split(' ').map(n => n[0]).join('')}
               </div>
             )}
