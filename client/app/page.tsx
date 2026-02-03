@@ -80,8 +80,8 @@ export default function Home() {
     done: filteredTasks.filter(t => t.status === 'done')
   }
 
-  const handleMoveTask = (taskId: string, newListId: string, newListIdParam?: string) => {
-    moveTask(taskId, newListId as Task['status'], newListIdParam)
+  const handleMoveTask = (taskId: string, newStatus: string, newListId?: string) => {
+    moveTask(taskId, newStatus as Task['status'], newListId)
   }
 
   const boardData = {

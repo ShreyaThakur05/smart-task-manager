@@ -29,7 +29,7 @@ interface BoardProps {
       }>
     }>
   }
-  moveTask?: (taskId: string, newListId: string) => void
+  moveTask?: (taskId: string, newStatus: string, newListId?: string) => void
 }
 
 export default function Board({ board, moveTask }: BoardProps) {
