@@ -58,13 +58,13 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       throw new Error('You must be logged in to create tasks')
     }
 
-    const { listId, ...cleanTaskData } = taskData as any
+    const { list_id, ...cleanTaskData } = taskData as any
     
     const newTask: Task = {
       ...cleanTaskData,
       id: crypto.randomUUID(),
       user_id: user.id,
-      list_id: listId || null,
+      list_id: list_id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       attachments: cleanTaskData.attachments || []

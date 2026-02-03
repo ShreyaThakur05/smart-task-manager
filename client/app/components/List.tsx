@@ -106,7 +106,7 @@ export default function List({ list }: ListProps) {
             })()
           : 'backlog',
         labels: [],
-        listId: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? null : list.id
+        list_id: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id
       })
       
       setNewCardTitle('')

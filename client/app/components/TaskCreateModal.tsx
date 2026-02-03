@@ -44,7 +44,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
         dueDate: dueDate || undefined,
         labels: [...labels, ...(timeEstimate ? [`estimate-${timeEstimate}`] : [])],
         attachments: attachmentNames,
-        listId: defaultListId
+        list_id: defaultListId
       })
 
       // Reset form
