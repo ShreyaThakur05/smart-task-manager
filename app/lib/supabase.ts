@@ -1,26 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 import { validateEnv } from './env'
 
-const env = validateEnv()
+// Safe initialization for SSR
+let supabaseClient: any = null
 
-if (!env.hasValidSupabase) {
-  console.warn('⚠️ Supabase not configured properly. Authentication will use mock mode.')
+if (typeof window !== 'undefined') {
+  const env = validateEnv()
+  if (env.hasValidSupabase) {
+    supabaseClient = createClient(env.supabaseUrl!, env.supabaseAnonKey!, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    })
+  }
 }
 
-export const supabase = env.hasValidSupabase ? createClient(env.supabaseUrl!, env.supabaseAnonKey!, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    debug: process.env.NODE_ENV === 'development'
-  },
-  global: {
-    headers: {
-      'apikey': env.supabaseAnonKey!
-    }
-  }
-}) : null
+export const supabase = supabaseClient
 
 // Database types
 export interface Task {

@@ -1,4 +1,15 @@
 export const validateEnv = () => {
+  // Always return safe defaults during SSR/build
+  if (typeof window === 'undefined') {
+    return {
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      geminiApiKey: '',
+      hasGemini: false,
+      hasValidSupabase: false
+    }
+  }
+
   const requiredVars = {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -12,9 +23,6 @@ export const validateEnv = () => {
 
   if (!hasValidSupabase) {
     console.warn('⚠️ Supabase not configured. Using mock authentication.')
-    console.warn('To use real authentication:')
-    console.warn('1. Create a Supabase project at https://supabase.com')
-    console.warn('2. Update .env.local with your project URL and anon key')
   }
 
   return {
