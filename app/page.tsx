@@ -253,12 +253,8 @@ export default function Home() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-white/10 mt-8 pt-6 flex flex-col md:flex-row justify-between text-xs text-gray-400">
+          <div className="border-t border-white/10 mt-8 pt-6 text-xs text-gray-400">
             <p>© 2026 Smart Tasks. All rights reserved.</p>
-            <div className="flex gap-6 mt-2 md:mt-0">
-              <span className="hover:text-white transition cursor-pointer">Privacy</span>
-              <span className="hover:text-white transition cursor-pointer">Terms</span>
-            </div>
           </div>
         </div>
       </footer>
