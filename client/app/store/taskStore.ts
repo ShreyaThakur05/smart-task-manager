@@ -14,7 +14,7 @@ interface Task {
   created_at: string
   updated_at: string
   user_id?: string
-  list_id?: string // Track which list the task belongs to
+  list_id?: string | null // Track which list the task belongs to
   attachments?: string[] // Store file URLs/names as JSON array
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]

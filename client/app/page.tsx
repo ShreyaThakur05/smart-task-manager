@@ -26,6 +26,7 @@ type Task = {
   created_at: string
   updated_at: string
   user_id?: string
+  list_id?: string | null
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]
   attachments?: string[]
