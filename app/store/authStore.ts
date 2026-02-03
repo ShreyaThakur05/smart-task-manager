@@ -1,8 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { validateEnv } from '../lib/env'
-
-const env = validateEnv()
 
 interface AuthUser {
   id: string
@@ -20,14 +17,30 @@ interface AuthState {
   isLoggedIn: () => boolean
 }
 
+const getEnv = () => {
+  if (typeof window === 'undefined') {
+    return { hasValidSupabase: false }
+  }
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  return {
+    hasValidSupabase: !!(supabaseUrl && supabaseKey && !supabaseUrl.includes('your_')),
+    supabaseUrl,
+    supabaseKey
+  }
+}
+
 export const useAuthStore = create<AuthState>()(persist(
   (set, get) => ({
     user: null,
     loading: false,
 
     login: async (email: string, password: string) => {
+      const env = getEnv()
+      
       if (!env.hasValidSupabase) {
-        // Mock login
         const mockUser: AuthUser = {
           id: 'mock-user-' + Date.now(),
           email: email.toLowerCase().trim(),
@@ -37,7 +50,6 @@ export const useAuthStore = create<AuthState>()(persist(
         return
       }
 
-      // Real Supabase login
       const { supabase } = await import('../lib/supabase')
       if (!supabase) throw new Error('Supabase not configured')
       
@@ -68,8 +80,9 @@ export const useAuthStore = create<AuthState>()(persist(
         throw new Error('Password must be at least 6 characters long')
       }
 
+      const env = getEnv()
+      
       if (!env.hasValidSupabase) {
-        // Mock registration
         const mockUser: AuthUser = {
           id: 'mock-user-' + Date.now(),
           email: email.toLowerCase().trim(),
@@ -79,7 +92,6 @@ export const useAuthStore = create<AuthState>()(persist(
         return
       }
       
-      // Real Supabase registration
       const { supabase } = await import('../lib/supabase')
       if (!supabase) throw new Error('Supabase not configured')
       
@@ -101,6 +113,8 @@ export const useAuthStore = create<AuthState>()(persist(
     },
 
     logout: async () => {
+      const env = getEnv()
+      
       if (!env.hasValidSupabase) {
         set({ user: null })
         return
@@ -116,6 +130,8 @@ export const useAuthStore = create<AuthState>()(persist(
 
     initialize: async () => {
       set({ loading: false })
+      
+      const env = getEnv()
       
       if (!env.hasValidSupabase) {
         return
