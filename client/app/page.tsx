@@ -269,6 +269,14 @@ export default function Home() {
         defaultStatus="backlog"
       />
       
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
+      
       {showAIAssistant && (
         <AIAssistant isOpen={showAIAssistant} onClose={() => setShowAIAssistant(false)} />
       )}
