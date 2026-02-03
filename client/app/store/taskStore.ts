@@ -14,6 +14,7 @@ interface Task {
   created_at: string
   updated_at: string
   user_id?: string
+  list_id?: string // Track which list the task belongs to
   attachments?: string[] // Store file URLs/names as JSON array
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]
@@ -30,7 +31,7 @@ interface TaskState {
   deleteList: (id: string) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
-  moveTask: (id: string, newStatus: Task['status']) => Promise<void>
+  moveTask: (id: string, newStatus: Task['status'], newListId?: string) => Promise<void>
   setView: (view: TaskState['view']) => void
   setSelectedTask: (task: Task | null) => void
   getFilteredTasks: () => Task[]
@@ -63,6 +64,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       ...cleanTaskData,
       id: crypto.randomUUID(),
       user_id: user.id,
+      list_id: listId || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       attachments: cleanTaskData.attachments || []
@@ -81,6 +83,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           labels: newTask.labels || [],
           due_date: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
           assignee: newTask.assignee || null,
+          list_id: newTask.list_id,
           attachments: newTask.attachments || []
         }])
       
@@ -182,12 +185,13 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  moveTask: async (id, newStatus) => {
+  moveTask: async (id, newStatus, newListId) => {
     try {
       const { error } = await supabase
         .from('tasks')
         .update({ 
           status: newStatus,
+          list_id: newListId || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -196,7 +200,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       
       set(state => ({
         tasks: state.tasks.map(task =>
-          task.id === id ? { ...task, status: newStatus, updated_at: new Date().toISOString() } : task
+          task.id === id ? { ...task, status: newStatus, list_id: newListId || null, updated_at: new Date().toISOString() } : task
         )
       }))
     } catch (error) {
@@ -234,6 +238,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         tasks: (tasks || []).map(task => ({
           ...task,
           dueDate: task.due_date,
+          list_id: task.list_id,
           labels: task.labels || [],
           attachments: task.attachments || []
         })), 

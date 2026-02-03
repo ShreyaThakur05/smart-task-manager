@@ -74,35 +74,33 @@ export default function Home() {
 
   const filteredTasks = getFilteredTasks()
   const tasksByStatus = {
-    backlog: filteredTasks.filter(t => t.status === 'backlog'),
+    backlog: filteredTasks.filter(t => t.status === 'backlog' && !t.list_id),
     'in-progress': filteredTasks.filter(t => t.status === 'in-progress'),
     review: filteredTasks.filter(t => t.status === 'review'),
     done: filteredTasks.filter(t => t.status === 'done')
   }
 
-  const handleMoveTask = (taskId: string, newListId: string) => {
-    moveTask(taskId, newListId as Task['status'])
+  const handleMoveTask = (taskId: string, newListId: string, newListIdParam?: string) => {
+    moveTask(taskId, newListId as Task['status'], newListIdParam)
   }
 
   const boardData = {
     id: '1',
     title: 'My Board',
     lists: lists.length > 0 ? lists.map(list => {
-      // For default lists, filter by status
+      // For default lists, filter by status and no list_id
       if (['backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
         return {
           ...list,
-          cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
+          cards: filteredTasks.filter(task => 
+            task.status === list.id && !task.list_id
+          )
         }
       }
-      // For custom lists, show all tasks (they use backlog status but belong to custom list)
+      // For custom lists, filter by list_id
       return {
         ...list,
-        cards: filteredTasks.filter(task => {
-          // Custom logic: tasks created in custom lists should appear there
-          // For now, show tasks with backlog status in custom lists too
-          return task.status === 'backlog'
-        })
+        cards: filteredTasks.filter(task => task.list_id === list.id)
       }
     }) : [
       { id: 'backlog', title: 'Backlog', cards: tasksByStatus.backlog || [] },

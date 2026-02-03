@@ -67,15 +67,20 @@ export default function Board({ board, moveTask }: BoardProps) {
     if (activeCard && moveTask) {
       const targetList = board.lists.find(list => list.id === overId)
       if (targetList) {
-        const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
-          'backlog': 'backlog',
-          'in-progress': 'in-progress', 
-          'review': 'review',
-          'done': 'done'
+        // For default lists, use status mapping
+        if (['backlog', 'in-progress', 'review', 'done'].includes(targetList.id)) {
+          const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+            'backlog': 'backlog',
+            'in-progress': 'in-progress', 
+            'review': 'review',
+            'done': 'done'
+          }
+          const newStatus = statusMap[targetList.id] || 'backlog'
+          moveTask(activeId, newStatus)
+        } else {
+          // For custom lists, use backlog status but set list_id
+          moveTask(activeId, 'backlog', targetList.id)
         }
-        
-        const newStatus = statusMap[targetList.id] || 'backlog'
-        moveTask(activeId, newStatus)
       }
     }
   }

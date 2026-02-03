@@ -89,22 +89,24 @@ export default function List({ list }: ListProps) {
   const handleAddCard = async () => {
     if (!newCardTitle.trim()) return
     
-    const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
-      'backlog': 'backlog',
-      'in progress': 'in-progress',
-      'review': 'review',
-      'done': 'done'
-    }
-    
     try {
       await addTask({
         title: newCardTitle,
         description: '',
         priority: 'medium',
         status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
-          ? statusMap[list.title.toLowerCase()] || 'backlog'
+          ? (() => {
+              const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+                'backlog': 'backlog',
+                'in progress': 'in-progress',
+                'review': 'review',
+                'done': 'done'
+              }
+              return statusMap[list.title.toLowerCase()] || 'backlog'
+            })()
           : 'backlog',
-        labels: []
+        labels: [],
+        listId: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? null : list.id
       })
       
       setNewCardTitle('')
@@ -284,7 +286,7 @@ export default function List({ list }: ListProps) {
           }
           return statusMap[list.title.toLowerCase()] || 'backlog'
         })()}
-        defaultListId={list.id}
+        defaultListId={['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id}
       />
       
       {/* Delete Confirmation Modal */}
