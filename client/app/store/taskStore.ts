@@ -20,6 +20,8 @@ interface Task {
   comments?: { id: string; text: string; author: string; timestamp: string }[]
 }
 
+export type { Task }
+
 interface TaskState {
   tasks: Task[]
   lists: { id: string; title: string; user_id?: string; created_at?: string }[]

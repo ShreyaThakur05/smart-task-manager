@@ -3,23 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, User, Tag, MessageSquare, Paperclip, Plus, Check, Trash2, Edit3 } from 'lucide-react'
-import { useTaskStore } from '../store/taskStore'
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'backlog' | 'in-progress' | 'review' | 'done'
-  assignee?: string
-  dueDate?: string
-  labels: string[]
-  subtasks?: { id: string; text: string; completed: boolean }[]
-  comments?: { id: string; text: string; author: string; timestamp: string }[]
-  attachments: string[]
-  created_at: string
-  updated_at: string
-}
+import { useTaskStore, type Task } from '../store/taskStore'
 
 interface TaskDetailModalProps {
   task: Task | null
@@ -327,7 +311,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       Labels
                     </h4>
                     <div className="flex flex-wrap gap-1">
-                      {(task.labels || []).map((label, index) => (
+                      {task.labels.map((label, index) => (
                         <span
                           key={index}
                           className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
@@ -335,7 +319,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                           {label}
                         </span>
                       ))}
-                      {(task.labels || []).length === 0 && (
+                      {task.labels.length === 0 && (
                         <span className="text-gray-500 dark:text-gray-400 text-sm">No labels</span>
                       )}
                     </div>
