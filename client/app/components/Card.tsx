@@ -47,11 +47,11 @@ export default function Card({ card }: CardProps) {
 
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-500'
-      case 'high': return 'bg-orange-500'
-      case 'medium': return 'bg-yellow-500'
-      case 'low': return 'bg-green-500'
-      default: return 'bg-gray-500'
+      case 'urgent': return 'bg-gradient-to-r from-red-500 to-pink-500'
+      case 'high': return 'bg-gradient-to-r from-orange-500 to-amber-500'
+      case 'medium': return 'bg-gradient-to-r from-yellow-400 to-orange-400'
+      case 'low': return 'bg-gradient-to-r from-green-400 to-emerald-500'
+      default: return 'bg-gradient-to-r from-gray-400 to-slate-500'
     }
   }
 
@@ -78,7 +78,7 @@ export default function Card({ card }: CardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={() => setSelectedTask(card as any)}
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 dark:border-gray-700 group relative ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-gradient-to-r hover:from-blue-400 hover:to-indigo-500 group relative overflow-visible hover:bg-gradient-to-br hover:from-blue-100/40 hover:to-purple-100/40 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 transform hover:scale-[1.02] ${isDragging ? 'opacity-50' : ''}`}
     >
       {/* Card Cover */}
       {card.cover && (
@@ -151,17 +151,27 @@ export default function Card({ card }: CardProps) {
 
         {/* Labels */}
         {card.labels && card.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {card.labels.slice(0, 3).map((label, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium"
-              >
-                {label}
-              </span>
-            ))}
+          <div className="flex flex-wrap gap-1.5">
+            {card.labels.slice(0, 3).map((label, index) => {
+              const colors = [
+                'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-lg',
+                'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg',
+                'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg',
+                'bg-gradient-to-r from-orange-400 to-red-500 text-white shadow-lg',
+                'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-lg',
+                'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+              ]
+              return (
+                <span
+                  key={index}
+                  className={`px-3 py-1.5 text-xs rounded-full font-semibold ${colors[index % colors.length]} transform hover:scale-105 transition-transform`}
+                >
+                  {label}
+                </span>
+              )
+            })}
             {card.labels.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">
+              <span className="px-3 py-1.5 bg-gradient-to-r from-gray-400 to-slate-500 text-white text-xs rounded-full font-semibold shadow-lg">
                 +{card.labels.length - 3}
               </span>
             )}
@@ -176,11 +186,13 @@ export default function Card({ card }: CardProps) {
                 {completedSubtasks}/{totalSubtasks} tasks
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div className="w-full bg-gradient-to-r from-gray-200 to-gray-300 dark:bg-gray-700 rounded-full h-2.5 shadow-inner">
               <div
-                className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 h-2.5 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden"
                 style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
+              </div>
             </div>
           </div>
         )}
@@ -190,7 +202,7 @@ export default function Card({ card }: CardProps) {
           {/* Left side - Assignee */}
           <div className="flex items-center">
             {card.assignee && (
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg border-2 border-white dark:border-gray-800 ring-2 ring-purple-100 dark:ring-purple-900">
                 {card.assignee.split(' ').map(n => n[0]).join('')}
               </div>
             )}

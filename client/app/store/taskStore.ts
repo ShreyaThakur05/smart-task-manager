@@ -7,15 +7,17 @@ interface Task {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
+  startDate?: string
   assignee?: string
   created_at: string
   updated_at: string
   user_id?: string
-  list_id?: string | null // Track which list the task belongs to
-  attachments?: string[] // Store file URLs/names as JSON array
+  sheet_id?: string
+  list_id?: string | null
+  attachments?: string[]
   subtasks?: { id: string; text: string; completed: boolean }[]
   comments?: { id: string; text: string; author: string; timestamp: string }[]
 }
@@ -24,24 +26,26 @@ export type { Task }
 
 interface TaskState {
   tasks: Task[]
-  lists: { id: string; title: string; user_id?: string; created_at?: string }[]
+  lists: { id: string; title: string; user_id?: string; sheet_id?: string; created_at?: string }[]
   view: 'board' | 'list' | 'calendar' | 'timeline'
   selectedTask: Task | null
   
-  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<void>
-  addList: (title: string) => Promise<void>
+  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>, sheetId?: string) => Promise<void>
+  addList: (title: string, sheetId?: string) => Promise<void>
   deleteList: (id: string) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   moveTask: (id: string, newStatus: Task['status'], newListId?: string) => Promise<void>
   setView: (view: TaskState['view']) => void
   setSelectedTask: (task: Task | null) => void
-  getFilteredTasks: () => Task[]
+  getFilteredTasks: (sheetId?: string) => Task[]
+  getFilteredLists: (sheetId?: string) => { id: string; title: string; user_id?: string; sheet_id?: string; created_at?: string }[]
   loadData: () => Promise<void>
   saveData: () => Promise<void>
 }
 
 const defaultLists = [
+  { id: 'yet-to-start', title: 'Yet to Start' },
   { id: 'backlog', title: 'Backlog' },
   { id: 'in-progress', title: 'In Progress' },
   { id: 'review', title: 'Review' },
@@ -54,7 +58,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   view: 'board',
   selectedTask: null,
 
-  addTask: async (taskData) => {
+  addTask: async (taskData, sheetId) => {
     const { user } = useAuthStore.getState()
     if (!user) {
       throw new Error('You must be logged in to create tasks')
@@ -66,10 +70,24 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       ...cleanTaskData,
       id: crypto.randomUUID(),
       user_id: user.id,
+      sheet_id: sheetId,
       list_id: list_id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       attachments: cleanTaskData.attachments || []
+    }
+    
+    // Auto-move based on start date
+    if (newTask.startDate) {
+      const startDate = new Date(newTask.startDate)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      if (startDate > today) {
+        newTask.status = 'yet-to-start'
+      } else if (startDate <= today) {
+        newTask.status = 'in-progress'
+      }
     }
     
     try {
@@ -101,7 +119,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  addList: async (title) => {
+  addList: async (title, sheetId) => {
     const { user } = useAuthStore.getState()
     if (!user) return
 
@@ -109,6 +127,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       id: crypto.randomUUID(), 
       title: title.trim(),
       user_id: user.id,
+      sheet_id: sheetId,
       created_at: new Date().toISOString()
     }
     
@@ -130,7 +149,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   deleteList: async (id) => {
-    const defaultIds = ['backlog', 'in-progress', 'review', 'done']
+    const defaultIds = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done']
     if (defaultIds.includes(id)) return
     
     try {
@@ -213,7 +232,22 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   setView: (view) => set({ view }),
   setSelectedTask: (task) => set({ selectedTask: task }),
 
-  getFilteredTasks: () => get().tasks,
+  getFilteredTasks: (sheetId) => {
+    const tasks = get().tasks
+    return sheetId ? tasks.filter(task => task.sheet_id === sheetId) : tasks
+  },
+  getFilteredLists: (sheetId) => {
+    const lists = get().lists
+    const defaultLists = [
+      { id: 'yet-to-start', title: 'Yet to Start', sheet_id: sheetId },
+      { id: 'backlog', title: 'Backlog', sheet_id: sheetId },
+      { id: 'in-progress', title: 'In Progress', sheet_id: sheetId },
+      { id: 'review', title: 'Review', sheet_id: sheetId },
+      { id: 'done', title: 'Done', sheet_id: sheetId }
+    ]
+    const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists
+    return [...defaultLists, ...customLists]
+  },
 
   loadData: async () => {
     const { user } = useAuthStore.getState()

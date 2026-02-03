@@ -7,6 +7,7 @@ import { Plus, MoreHorizontal, Circle, Clock, CheckCircle, AlertCircle, Edit, Tr
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 import Card from './Card'
 import TaskCreateModal from './TaskCreateModal'
 import { AnimatePresence } from 'framer-motion'
@@ -39,8 +40,9 @@ export default function List({ list }: ListProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { addTask, deleteList } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
   
-  const isDefaultList = ['backlog', 'in-progress', 'review', 'done'].includes(list.id)
+  const isDefaultList = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)
   
   const {
     attributes,
@@ -68,6 +70,7 @@ export default function List({ list }: ListProps) {
 
   const getListColor = (title: string) => {
     switch (title.toLowerCase()) {
+      case 'yet to start': return 'border-t-purple-500 bg-purple-50 dark:bg-purple-900/20'
       case 'backlog': return 'border-t-slate-500 bg-slate-50 dark:bg-slate-900/20'
       case 'in progress': return 'border-t-blue-500 bg-blue-50 dark:bg-blue-900/20'
       case 'review': return 'border-t-amber-500 bg-amber-50 dark:bg-amber-900/20'
@@ -78,6 +81,7 @@ export default function List({ list }: ListProps) {
 
   const getListIcon = (title: string) => {
     switch (title.toLowerCase()) {
+      case 'yet to start': return <Clock className="w-4 h-4 text-purple-500" />
       case 'backlog': return <Circle className="w-4 h-4 text-gray-500" />
       case 'in progress': return <Clock className="w-4 h-4 text-blue-500" />
       case 'review': return <AlertCircle className="w-4 h-4 text-yellow-500" />
@@ -94,9 +98,10 @@ export default function List({ list }: ListProps) {
         title: newCardTitle,
         description: '',
         priority: 'medium',
-        status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
+        status: ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) 
           ? (() => {
-              const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+              const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+                'yet to start': 'yet-to-start',
                 'backlog': 'backlog',
                 'in progress': 'in-progress',
                 'review': 'review',
@@ -106,8 +111,8 @@ export default function List({ list }: ListProps) {
             })()
           : 'backlog',
         labels: [],
-        list_id: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id
-      })
+        list_id: ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id
+      }, activeSheetId)
       
       setNewCardTitle('')
       setShowAddCard(false)
@@ -278,7 +283,8 @@ export default function List({ list }: ListProps) {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus={(() => {
-          const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+          const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+            'yet to start': 'yet-to-start',
             'backlog': 'backlog',
             'in progress': 'in-progress', 
             'review': 'review',
@@ -286,7 +292,8 @@ export default function List({ list }: ListProps) {
           }
           return statusMap[list.title.toLowerCase()] || 'backlog'
         })()}
-        defaultListId={['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id}
+        defaultListId={['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id}
+        sheetId={activeSheetId}
       />
       
       {/* Delete Confirmation Modal */}

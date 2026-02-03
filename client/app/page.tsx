@@ -2,6 +2,7 @@
 
 import { useTaskStore } from './store/taskStore'
 import { useAuthStore } from './store/authStore'
+import { useSheetStore } from './store/sheetStore'
 import AuthForm from './components/AuthForm'
 import Board from './components/Board'
 import TableView from './components/TableView'
@@ -11,6 +12,7 @@ import ThemeToggle from './components/ThemeToggle'
 import TaskDetailModal from './components/TaskDetailModal'
 import TaskCreateModal from './components/TaskCreateModal'
 import AIAssistant from './components/AIAssistant'
+import SheetTabs from './components/SheetTabs'
 import { useState, useEffect } from 'react'
 import { Plus, LayoutGrid, List, Calendar, BarChart3, Zap, LogOut, Bot, User } from 'lucide-react'
 
@@ -19,7 +21,7 @@ type Task = {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
   assignee?: string
@@ -34,6 +36,7 @@ type Task = {
 
 export default function Home() {
   const authStore = useAuthStore()
+  const { activeSheetId, getActiveSheet } = useSheetStore()
   const { 
     tasks, 
     lists, 
@@ -42,6 +45,7 @@ export default function Home() {
     selectedTask, 
     setSelectedTask, 
     getFilteredTasks, 
+    getFilteredLists,
     addTask, 
     moveTask, 
     loadData
@@ -49,6 +53,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
+
+  const activeSheet = getActiveSheet()
 
   useEffect(() => {
     setMounted(true)
@@ -73,9 +79,11 @@ export default function Home() {
     return <AuthForm />
   }
 
-  const filteredTasks = getFilteredTasks()
+  const filteredTasks = getFilteredTasks(activeSheetId)
+  const filteredLists = getFilteredLists(activeSheetId)
   const tasksByStatus = {
-    backlog: filteredTasks.filter(t => t.status === 'backlog' && !t.list_id),
+    'yet-to-start': filteredTasks.filter(t => t.status === 'yet-to-start'),
+    backlog: filteredTasks.filter(t => t.status === 'backlog'),
     'in-progress': filteredTasks.filter(t => t.status === 'in-progress'),
     review: filteredTasks.filter(t => t.status === 'review'),
     done: filteredTasks.filter(t => t.status === 'done')
@@ -87,28 +95,19 @@ export default function Home() {
 
   const boardData = {
     id: '1',
-    title: 'My Board',
-    lists: lists.length > 0 ? lists.map(list => {
-      // For default lists, filter by status and no list_id
-      if (['backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
+    title: activeSheet?.name || 'My Board',
+    lists: filteredLists.map(list => {
+      if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
         return {
           ...list,
-          cards: filteredTasks.filter(task => 
-            task.status === list.id && !task.list_id
-          )
+          cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
         }
       }
-      // For custom lists, filter by list_id
       return {
         ...list,
-        cards: filteredTasks.filter(task => task.list_id === list.id)
+        cards: filteredTasks.filter(task => task.status === 'backlog')
       }
-    }) : [
-      { id: 'backlog', title: 'Backlog', cards: tasksByStatus.backlog || [] },
-      { id: 'in-progress', title: 'In Progress', cards: tasksByStatus['in-progress'] || [] },
-      { id: 'review', title: 'Review', cards: tasksByStatus.review || [] },
-      { id: 'done', title: 'Done', cards: tasksByStatus.done || [] }
-    ]
+    })
   }
 
   return (
@@ -122,7 +121,9 @@ export default function Home() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Smart Tasks</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              {activeSheet?.icon} {activeSheet?.name || 'Smart Tasks'}
+            </h1>
           </div>
           
           <div className="flex items-center gap-4">
@@ -141,6 +142,9 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Sheet Tabs */}
+      <SheetTabs />
 
       {/* Toolbar - Fixed */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-16 z-30">
@@ -267,6 +271,7 @@ export default function Home() {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus="backlog"
+        sheetId={activeSheetId}
       />
       
       {selectedTask && (
