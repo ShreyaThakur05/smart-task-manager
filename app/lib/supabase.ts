@@ -1,13 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
-import { validateEnv } from './env'
 
 // Safe initialization for SSR
 let supabaseClient: any = null
 
 if (typeof window !== 'undefined') {
-  const env = validateEnv()
-  if (env.hasValidSupabase) {
-    supabaseClient = createClient(env.supabaseUrl!, env.supabaseAnonKey!, {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your_')) {
+    supabaseClient = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
