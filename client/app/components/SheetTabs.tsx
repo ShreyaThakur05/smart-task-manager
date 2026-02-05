@@ -15,8 +15,10 @@ const colorOptions = [
 ]
 
 export default function SheetTabs() {
-  const { sheets, activeSheetId, addSheet, deleteSheet, setActiveSheet } = useSheetStore()
+  const { sheets, activeSheetId, addSheet, deleteSheet, updateSheet, setActiveSheet } = useSheetStore()
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingSheetId, setEditingSheetId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
   const [newSheetName, setNewSheetName] = useState('')
   const [selectedColor, setSelectedColor] = useState('blue')
 
@@ -27,6 +29,24 @@ export default function SheetTabs() {
       setSelectedColor('blue')
       setShowAddModal(false)
     }
+  }
+
+  const handleEditSheet = (sheet: any) => {
+    setEditingSheetId(sheet.id)
+    setEditingName(sheet.name)
+  }
+
+  const handleSaveEdit = () => {
+    if (editingName.trim() && editingSheetId) {
+      updateSheet(editingSheetId, { name: editingName.trim() })
+      setEditingSheetId(null)
+      setEditingName('')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingSheetId(null)
+    setEditingName('')
   }
 
   const getColorClass = (color: string) => {
@@ -44,18 +64,38 @@ export default function SheetTabs() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {sheets.map((sheet) => (
-            <motion.button
+            <motion.div
               key={sheet.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveSheet(sheet.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap group relative ${
                 activeSheetId === sheet.id
                   ? `${getColorClass(sheet.color)} text-white shadow-lg`
                   : `bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ${getHoverClass(sheet.color)} hover:text-white`
               }`}
             >
-              <span className="font-medium text-sm">{sheet.name}</span>
+              {editingSheetId === sheet.id ? (
+                <input
+                  type="text"
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') handleSaveEdit()
+                    if (e.key === 'Escape') handleCancelEdit()
+                  }}
+                  onBlur={handleSaveEdit}
+                  className="bg-transparent border-b border-white outline-none font-medium text-sm w-32"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  onClick={() => setActiveSheet(sheet.id)}
+                  onDoubleClick={() => handleEditSheet(sheet)}
+                  className="font-medium text-sm cursor-pointer"
+                >
+                  {sheet.name}
+                </span>
+              )}
               
               {sheets.length > 1 && (
                 <button
@@ -68,7 +108,7 @@ export default function SheetTabs() {
                   <X className="w-3 h-3" />
                 </button>
               )}
-            </motion.button>
+            </motion.div>
           ))}
           
           <motion.button

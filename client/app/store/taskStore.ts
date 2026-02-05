@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { useAuthStore } from './authStore'
 import { supabase } from '../lib/supabase'
 
@@ -45,17 +46,18 @@ interface TaskState {
 }
 
 const defaultLists = [
-  { id: 'backlog', title: '◦ Backlog' },
-  { id: 'in-progress', title: '▶ In Progress' },
-  { id: 'review', title: '◈ Review' },
-  { id: 'done', title: '✓ Done' }
+  { id: 'backlog', title: 'Backlog' },
+  { id: 'in-progress', title: 'In Progress' },
+  { id: 'review', title: 'Review' },
+  { id: 'done', title: 'Done' }
 ]
 
-export const useTaskStore = create<TaskState>((set, get) => ({
-  tasks: [],
-  lists: defaultLists,
-  view: 'board',
-  selectedTask: null,
+export const useTaskStore = create<TaskState>()(persist(
+  (set, get) => ({
+    tasks: [],
+    lists: defaultLists,
+    view: 'board',
+    selectedTask: null,
 
   addTask: async (taskData, sheetId) => {
     const { user } = useAuthStore.getState()
@@ -235,14 +237,9 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
   getFilteredLists: (sheetId) => {
     const lists = get().lists
-    const defaultLists = [
-      { id: 'backlog', title: '◦ Backlog', sheet_id: sheetId },
-      { id: 'in-progress', title: '▶ In Progress', sheet_id: sheetId },
-      { id: 'review', title: '◈ Review', sheet_id: sheetId },
-      { id: 'done', title: '✓ Done', sheet_id: sheetId }
-    ]
-    const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists
-    return [...defaultLists, ...customLists]
+    const filteredDefaults = defaultLists.map(list => ({ ...list, sheet_id: sheetId }))
+    const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists.filter(list => !defaultLists.find(d => d.id === list.id))
+    return [...filteredDefaults, ...customLists]
   },
 
   loadData: async () => {
@@ -285,4 +282,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   saveData: async () => {
     // Auto-save is handled by individual operations in Supabase
   }
-}))
+})),
+{
+  name: 'task-store'
+}
+))

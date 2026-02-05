@@ -20,10 +20,10 @@ interface ListState {
 }
 
 const defaultLists = [
-  { id: 'backlog', title: '◦ Backlog' },
-  { id: 'in-progress', title: '▶ In Progress' },
-  { id: 'review', title: '◈ Review' },
-  { id: 'done', title: '✓ Done' }
+  { id: 'backlog', title: 'Backlog' },
+  { id: 'in-progress', title: 'In Progress' },
+  { id: 'review', title: 'Review' },
+  { id: 'done', title: 'Done' }
 ]
 
 export const useListStore = create<ListState>((set, get) => ({
