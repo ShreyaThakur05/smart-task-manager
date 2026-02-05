@@ -5,7 +5,6 @@ interface Sheet {
   id: string
   name: string
   color: string
-  icon: string
   created_at: string
 }
 
@@ -13,7 +12,7 @@ interface SheetState {
   sheets: Sheet[]
   activeSheetId: string
   
-  addSheet: (name: string, color?: string, icon?: string) => void
+  addSheet: (name: string, color?: string) => void
   deleteSheet: (id: string) => void
   updateSheet: (id: string, updates: Partial<Sheet>) => void
   setActiveSheet: (id: string) => void
@@ -21,8 +20,8 @@ interface SheetState {
 }
 
 const defaultSheets: Sheet[] = [
-  { id: 'professional', name: 'Professional', color: 'blue', icon: '💼', created_at: new Date().toISOString() },
-  { id: 'personal', name: 'Personal', color: 'green', icon: '🏠', created_at: new Date().toISOString() }
+  { id: 'professional', name: 'Professional', color: 'blue', created_at: new Date().toISOString() },
+  { id: 'personal', name: 'Personal', color: 'green', created_at: new Date().toISOString() }
 ]
 
 const generateId = () => {
@@ -37,12 +36,11 @@ export const useSheetStore = create<SheetState>()(persist(
     sheets: defaultSheets,
     activeSheetId: 'professional',
 
-    addSheet: (name, color = 'purple', icon = '📋') => {
+    addSheet: (name, color = 'purple') => {
       const newSheet: Sheet = {
         id: generateId(),
         name: name.trim(),
         color,
-        icon,
         created_at: new Date().toISOString()
       }
       set(state => ({ sheets: [...state.sheets, newSheet] }))

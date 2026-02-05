@@ -7,7 +7,7 @@ interface Task {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
   startDate?: string
@@ -45,11 +45,10 @@ interface TaskState {
 }
 
 const defaultLists = [
-  { id: 'yet-to-start', title: 'Yet to Start' },
-  { id: 'backlog', title: 'Backlog' },
-  { id: 'in-progress', title: 'In Progress' },
-  { id: 'review', title: 'Review' },
-  { id: 'done', title: 'Done' }
+  { id: 'backlog', title: '◦ Backlog' },
+  { id: 'in-progress', title: '▶ In Progress' },
+  { id: 'review', title: '◈ Review' },
+  { id: 'done', title: '✓ Done' }
 ]
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -83,9 +82,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
-      if (startDate > today) {
-        newTask.status = 'yet-to-start'
-      } else if (startDate <= today) {
+      if (startDate <= today) {
         newTask.status = 'in-progress'
       }
     }
@@ -149,7 +146,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   deleteList: async (id) => {
-    const defaultIds = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done']
+    const defaultIds = ['backlog', 'in-progress', 'review', 'done']
     if (defaultIds.includes(id)) return
     
     try {
@@ -239,11 +236,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   getFilteredLists: (sheetId) => {
     const lists = get().lists
     const defaultLists = [
-      { id: 'yet-to-start', title: 'Yet to Start', sheet_id: sheetId },
-      { id: 'backlog', title: 'Backlog', sheet_id: sheetId },
-      { id: 'in-progress', title: 'In Progress', sheet_id: sheetId },
-      { id: 'review', title: 'Review', sheet_id: sheetId },
-      { id: 'done', title: 'Done', sheet_id: sheetId }
+      { id: 'backlog', title: '◦ Backlog', sheet_id: sheetId },
+      { id: 'in-progress', title: '▶ In Progress', sheet_id: sheetId },
+      { id: 'review', title: '◈ Review', sheet_id: sheetId },
+      { id: 'done', title: '✓ Done', sheet_id: sheetId }
     ]
     const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists
     return [...defaultLists, ...customLists]
