@@ -21,7 +21,7 @@ type Task = {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
   assignee?: string
@@ -82,8 +82,7 @@ export default function Home() {
   const filteredTasks = getFilteredTasks(activeSheetId)
   const filteredLists = getFilteredLists(activeSheetId)
   const tasksByStatus = {
-    'yet-to-start': filteredTasks.filter(t => t.status === 'yet-to-start'),
-    backlog: filteredTasks.filter(t => t.status === 'backlog'),
+    backlog: filteredTasks.filter(t => t.status === 'backlog' && !t.list_id),
     'in-progress': filteredTasks.filter(t => t.status === 'in-progress'),
     review: filteredTasks.filter(t => t.status === 'review'),
     done: filteredTasks.filter(t => t.status === 'done')
@@ -97,7 +96,7 @@ export default function Home() {
     id: '1',
     title: activeSheet?.name || 'My Board',
     lists: filteredLists.map(list => {
-      if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
+      if (['backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
         return {
           ...list,
           cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []
@@ -105,7 +104,7 @@ export default function Home() {
       }
       return {
         ...list,
-        cards: filteredTasks.filter(task => task.status === 'backlog')
+        cards: filteredTasks.filter(task => task.list_id === list.id)
       }
     })
   }
@@ -122,7 +121,7 @@ export default function Home() {
               </svg>
             </div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {activeSheet?.icon} {activeSheet?.name || 'Smart Tasks'}
+              {activeSheet?.name || 'Smart Tasks'}
             </h1>
           </div>
           
