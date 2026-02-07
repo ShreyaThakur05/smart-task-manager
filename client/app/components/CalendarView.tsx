@@ -4,10 +4,13 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 import TaskCreateModal from './TaskCreateModal'
 
 export default function CalendarView() {
-  const { tasks, setSelectedTask } = useTaskStore()
+  const { getFilteredTasks, setSelectedTask } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
+  const tasks = getFilteredTasks(activeSheetId)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showTaskModal, setShowTaskModal] = useState(false)
 
@@ -223,6 +226,7 @@ export default function CalendarView() {
           isOpen={showTaskModal}
           onClose={() => setShowTaskModal(false)}
           defaultStatus="backlog"
+          sheetId={activeSheetId}
         />
       )}
     </div>

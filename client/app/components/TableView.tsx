@@ -4,9 +4,12 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, Filter, Download, Eye, Edit, Trash2 } from 'lucide-react'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 
 export default function TableView() {
-  const { tasks, updateTask, deleteTask, setSelectedTask } = useTaskStore()
+  const { getFilteredTasks, updateTask, deleteTask, setSelectedTask } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
+  const tasks = getFilteredTasks(activeSheetId)
   const [sortField, setSortField] = useState<string>('createdAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [selectedRows, setSelectedRows] = useState<string[]>([])

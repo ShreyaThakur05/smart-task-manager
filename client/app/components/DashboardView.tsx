@@ -3,9 +3,12 @@
 import { motion } from 'framer-motion'
 import { TrendingUp, Clock, CheckCircle, AlertTriangle, Users, Target, Calendar, BarChart3 } from 'lucide-react'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 
 export default function DashboardView() {
-  const { tasks } = useTaskStore()
+  const { getFilteredTasks } = useTaskStore()
+  const { activeSheetId } = useSheetStore()
+  const tasks = getFilteredTasks(activeSheetId)
 
   // Calculate metrics
   const totalTasks = tasks.length
