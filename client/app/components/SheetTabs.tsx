@@ -91,7 +91,7 @@ export default function SheetTabs() {
                   }}
                   onBlur={handleSaveEdit}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white dark:bg-gray-800 border border-white dark:border-gray-600 outline-none font-medium text-sm w-32 px-2 py-1 rounded"
+                  className="bg-gray-900 text-white border-2 border-white outline-none font-medium text-sm w-32 px-2 py-1 rounded"
                   autoFocus
                 />
               ) : (

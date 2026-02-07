@@ -42,7 +42,7 @@ export default function List({ list }: ListProps) {
   const { addTask, deleteList } = useTaskStore()
   const { activeSheetId } = useSheetStore()
   
-  const isDefaultList = ['backlog', 'in-progress', 'review', 'done'].includes(list.id)
+  const isDefaultList = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)
   
   const {
     attributes,
@@ -70,6 +70,7 @@ export default function List({ list }: ListProps) {
 
   const getListColor = (title: string) => {
     switch (title.toLowerCase()) {
+      case 'yet to start': return 'border-t-purple-500 bg-purple-50 dark:bg-purple-900/20'
       case 'backlog': return 'border-t-slate-500 bg-slate-50 dark:bg-slate-900/20'
       case 'in progress': return 'border-t-blue-500 bg-blue-50 dark:bg-blue-900/20'
       case 'review': return 'border-t-amber-500 bg-amber-50 dark:bg-amber-900/20'
@@ -79,8 +80,9 @@ export default function List({ list }: ListProps) {
   }
 
   const getListIcon = (title: string) => {
-    const cleanTitle = title.replace(/^[◦▶◈✓]\s*/, '').toLowerCase()
+    const cleanTitle = title.replace(/^[⏳◦▶◈✓]\s*/, '').toLowerCase()
     switch (cleanTitle) {
+      case 'yet to start': return <span className="text-purple-500 text-lg">⏳</span>
       case 'backlog': return <span className="text-gray-500 text-lg">◦</span>
       case 'in progress': return <span className="text-blue-500 text-lg">▶</span>
       case 'review': return <span className="text-yellow-500 text-lg">◈</span>
@@ -97,19 +99,20 @@ export default function List({ list }: ListProps) {
         title: newCardTitle,
         description: '',
         priority: 'medium',
-        status: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) 
+        status: ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) 
           ? (() => {
-              const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+              const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+                'yet to start': 'yet-to-start',
                 'backlog': 'backlog',
                 'in progress': 'in-progress',
                 'review': 'review',
                 'done': 'done'
               }
-              return statusMap[list.title.replace(/^[◦▶◈✓]\s*/, '').toLowerCase()] || 'backlog'
+              return statusMap[list.title.replace(/^[⏳◦▶◈✓]\s*/, '').toLowerCase()] || 'backlog'
             })()
           : 'backlog',
         labels: [],
-        list_id: ['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id
+        list_id: ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id
       }, activeSheetId)
       
       setNewCardTitle('')
@@ -281,15 +284,16 @@ export default function List({ list }: ListProps) {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         defaultStatus={(() => {
-          const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+          const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+            'yet to start': 'yet-to-start',
             'backlog': 'backlog',
             'in progress': 'in-progress', 
             'review': 'review',
             'done': 'done'
           }
-          return statusMap[list.title.replace(/^[◦▶◈✓]\s*/, '').toLowerCase()] || 'backlog'
+          return statusMap[list.title.replace(/^[⏳◦▶◈✓]\s*/, '').toLowerCase()] || 'backlog'
         })()}
-        defaultListId={['backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id}
+        defaultListId={['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id) ? undefined : list.id}
         sheetId={activeSheetId}
       />
       

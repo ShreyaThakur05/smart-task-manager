@@ -8,7 +8,7 @@ import { useTaskStore } from '../store/taskStore'
 interface TaskCreateModalProps {
   isOpen: boolean
   onClose: () => void
-  defaultStatus?: 'backlog' | 'in-progress' | 'review' | 'done'
+  defaultStatus?: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   defaultListId?: string
   sheetId?: string
 }
@@ -98,6 +98,7 @@ export default function TaskCreateModal({ isOpen, onClose, defaultStatus = 'back
   ]
 
   const statusOptions = [
+    { value: 'yet-to-start', label: 'Yet to Start' },
     { value: 'backlog', label: 'Backlog' },
     { value: 'in-progress', label: 'In Progress' },
     { value: 'review', label: 'Review' },

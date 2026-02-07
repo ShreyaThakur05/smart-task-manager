@@ -68,8 +68,9 @@ export default function Board({ board, moveTask }: BoardProps) {
       const targetList = board.lists.find(list => list.id === overId)
       if (targetList) {
         // For default lists, use status mapping
-        if (['backlog', 'in-progress', 'review', 'done'].includes(targetList.id)) {
-          const statusMap: { [key: string]: 'backlog' | 'in-progress' | 'review' | 'done' } = {
+        if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(targetList.id)) {
+          const statusMap: { [key: string]: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done' } = {
+            'yet-to-start': 'yet-to-start',
             'backlog': 'backlog',
             'in-progress': 'in-progress', 
             'review': 'review',

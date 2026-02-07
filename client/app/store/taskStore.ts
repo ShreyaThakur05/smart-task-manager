@@ -7,7 +7,7 @@ interface Task {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
-  status: 'backlog' | 'in-progress' | 'review' | 'done'
+  status: 'yet-to-start' | 'backlog' | 'in-progress' | 'review' | 'done'
   labels: string[]
   dueDate?: string
   startDate?: string
@@ -42,9 +42,11 @@ interface TaskState {
   getFilteredLists: (sheetId?: string) => { id: string; title: string; user_id?: string; sheet_id?: string; created_at?: string }[]
   loadData: () => Promise<void>
   saveData: () => Promise<void>
+  checkAndMoveTasksByDate: () => Promise<void>
 }
 
 const defaultLists = [
+  { id: 'yet-to-start', title: 'Yet to Start' },
   { id: 'backlog', title: 'Backlog' },
   { id: 'in-progress', title: 'In Progress' },
   { id: 'review', title: 'Review' },
@@ -77,13 +79,16 @@ export const useTaskStore = create<TaskState>()(
       attachments: cleanTaskData.attachments || []
     }
     
-    // Auto-move based on start date
+    // Auto-assign status based on start date
     if (newTask.startDate) {
       const startDate = new Date(newTask.startDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
+      startDate.setHours(0, 0, 0, 0)
       
-      if (startDate <= today) {
+      if (startDate > today) {
+        newTask.status = 'yet-to-start'
+      } else if (startDate <= today && newTask.status === 'yet-to-start') {
         newTask.status = 'in-progress'
       }
     }
@@ -100,6 +105,7 @@ export const useTaskStore = create<TaskState>()(
           status: newTask.status,
           labels: newTask.labels || [],
           due_date: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
+          start_date: newTask.startDate ? new Date(newTask.startDate).toISOString() : null,
           assignee: newTask.assignee || null,
           list_id: newTask.list_id,
           attachments: newTask.attachments || []
@@ -147,7 +153,7 @@ export const useTaskStore = create<TaskState>()(
   },
 
   deleteList: async (id) => {
-    const defaultIds = ['backlog', 'in-progress', 'review', 'done']
+    const defaultIds = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done']
     if (defaultIds.includes(id)) return
     
     try {
@@ -239,6 +245,26 @@ export const useTaskStore = create<TaskState>()(
     const filteredDefaults = defaultLists.map(list => ({ ...list, sheet_id: sheetId }))
     const customLists = sheetId ? lists.filter(list => list.sheet_id === sheetId) : lists.filter(list => !defaultLists.find(d => d.id === list.id))
     return [...filteredDefaults, ...customLists]
+  },
+
+  checkAndMoveTasksByDate: async () => {
+    const { user } = useAuthStore.getState()
+    if (!user) return
+
+    const tasks = get().tasks
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    for (const task of tasks) {
+      if (task.startDate && task.status === 'yet-to-start') {
+        const startDate = new Date(task.startDate)
+        startDate.setHours(0, 0, 0, 0)
+        
+        if (startDate <= today) {
+          await get().moveTask(task.id, 'in-progress')
+        }
+      }
+    }
   },
 
   loadData: async () => {
