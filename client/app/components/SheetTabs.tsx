@@ -79,12 +79,19 @@ export default function SheetTabs() {
                   type="text"
                   value={editingName}
                   onChange={(e) => setEditingName(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') handleSaveEdit()
-                    if (e.key === 'Escape') handleCancelEdit()
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSaveEdit()
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      handleCancelEdit()
+                    }
                   }}
                   onBlur={handleSaveEdit}
-                  className="bg-transparent border-b border-white outline-none font-medium text-sm w-32"
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-gray-800 border border-white dark:border-gray-600 outline-none font-medium text-sm w-32 px-2 py-1 rounded"
                   autoFocus
                 />
               ) : (
