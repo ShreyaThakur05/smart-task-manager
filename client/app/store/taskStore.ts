@@ -99,6 +99,7 @@ export const useTaskStore = create<TaskState>()(
         .insert([{
           id: newTask.id,
           user_id: newTask.user_id,
+          sheet_id: newTask.sheet_id,
           title: newTask.title,
           description: newTask.description || null,
           priority: newTask.priority,
