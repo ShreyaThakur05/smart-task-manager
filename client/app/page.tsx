@@ -104,7 +104,8 @@ export default function Home() {
     id: '1',
     title: activeSheet?.name || 'My Board',
     lists: filteredLists.map(list => {
-      if (['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)) {
+      const isDefaultList = ['yet-to-start', 'backlog', 'in-progress', 'review', 'done'].includes(list.id)
+      if (isDefaultList) {
         return {
           ...list,
           cards: tasksByStatus[list.id as keyof typeof tasksByStatus] || []

@@ -6,6 +6,7 @@ import { Plus, Inbox } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTaskStore } from '../store/taskStore'
+import { useSheetStore } from '../store/sheetStore'
 import List from './List'
 
 interface BoardProps {
@@ -40,7 +41,8 @@ export default function Board({ board, moveTask }: BoardProps) {
   
   const handleAddList = () => {
     if (newListName.trim()) {
-      addList(newListName.trim())
+      const { activeSheetId } = useSheetStore.getState()
+      addList(newListName.trim(), activeSheetId)
       setNewListName('')
       setShowAddListModal(false)
     }

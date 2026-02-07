@@ -141,7 +141,8 @@ export const useTaskStore = create<TaskState>()(
         .insert([{
           id: newList.id,
           user_id: newList.user_id,
-          title: newList.title
+          title: newList.title,
+          sheet_id: newList.sheet_id
         }])
       
       if (error) throw error
@@ -284,7 +285,10 @@ export const useTaskStore = create<TaskState>()(
         .eq('user_id', user.id)
         .order('created_at')
       
-      const customLists = lists || []
+      const customLists = (lists || []).map(list => ({
+        ...list,
+        sheet_id: list.sheet_id || undefined
+      }))
       
       set({ 
         tasks: (tasks || []).map(task => ({
@@ -296,10 +300,10 @@ export const useTaskStore = create<TaskState>()(
           labels: task.labels || [],
           attachments: task.attachments || []
         })), 
-        lists: customLists
+        lists: [...defaultLists, ...customLists]
       })
     } catch (error) {
-      set({ tasks: [], lists: [] })
+      set({ tasks: [], lists: defaultLists })
     }
   },
 

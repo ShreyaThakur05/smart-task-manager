@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, Palette } from 'lucide-react'
+import { Plus, X, Palette, Edit2 } from 'lucide-react'
 import { useSheetStore } from '../store/sheetStore'
 
 const colorOptions = [
@@ -39,9 +39,9 @@ export default function SheetTabs() {
   const handleSaveEdit = () => {
     if (editingName.trim() && editingSheetId) {
       updateSheet(editingSheetId, { name: editingName.trim() })
-      setEditingSheetId(null)
-      setEditingName('')
     }
+    setEditingSheetId(null)
+    setEditingName('')
   }
 
   const handleCancelEdit = () => {
@@ -89,7 +89,9 @@ export default function SheetTabs() {
                       handleCancelEdit()
                     }
                   }}
-                  onBlur={handleSaveEdit}
+                  onBlur={() => {
+                    setTimeout(() => handleSaveEdit(), 100)
+                  }}
                   onClick={(e) => e.stopPropagation()}
                   className="bg-gray-900 text-white border-2 border-white outline-none font-medium text-sm w-32 px-2 py-1 rounded"
                   autoFocus
@@ -97,11 +99,22 @@ export default function SheetTabs() {
               ) : (
                 <span 
                   onClick={() => setActiveSheet(sheet.id)}
-                  onDoubleClick={() => handleEditSheet(sheet)}
                   className="font-medium text-sm cursor-pointer"
                 >
                   {sheet.name}
                 </span>
+              )}
+              
+              {!editingSheetId && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditSheet(sheet)
+                  }}
+                  className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/20 transition-all"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
               )}
               
               {sheets.length > 1 && (
@@ -110,7 +123,7 @@ export default function SheetTabs() {
                     e.stopPropagation()
                     deleteSheet(sheet.id)
                   }}
-                  className="ml-1 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/20 transition-all"
+                  className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/20 transition-all"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -137,14 +150,15 @@ export default function SheetTabs() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center"
               onClick={() => setShowAddModal(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 w-96 z-50"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 w-96 z-[9999]"
+              onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create New Sheet</h3>
               
