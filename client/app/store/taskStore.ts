@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { useAuthStore } from './authStore'
 import { supabase } from '../lib/supabase'
 
@@ -52,7 +51,7 @@ const defaultLists = [
   { id: 'done', title: 'Done' }
 ]
 
-export const useTaskStore = create<TaskState>()(persist(
+export const useTaskStore = create<TaskState>()(
   (set, get) => ({
     tasks: [],
     lists: defaultLists,
@@ -259,31 +258,26 @@ export const useTaskStore = create<TaskState>()(persist(
         .eq('user_id', user.id)
         .order('created_at')
       
-      // Always include default lists, merge with custom lists
       const customLists = lists || []
-      const allLists = [...defaultLists, ...customLists]
       
       set({ 
         tasks: (tasks || []).map(task => ({
           ...task,
           dueDate: task.due_date,
+          startDate: task.start_date,
+          sheet_id: task.sheet_id,
           list_id: task.list_id,
           labels: task.labels || [],
           attachments: task.attachments || []
         })), 
-        lists: allLists
+        lists: customLists
       })
     } catch (error) {
-      // Silent fail - use default state with default lists
-      set({ tasks: [], lists: defaultLists })
+      set({ tasks: [], lists: [] })
     }
   },
 
   saveData: async () => {
     // Auto-save is handled by individual operations in Supabase
   }
-})),
-{
-  name: 'task-store'
-}
-))
+}))

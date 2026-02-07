@@ -70,7 +70,6 @@ export default function List({ list }: ListProps) {
 
   const getListColor = (title: string) => {
     switch (title.toLowerCase()) {
-      case 'yet to start': return 'border-t-purple-500 bg-purple-50 dark:bg-purple-900/20'
       case 'backlog': return 'border-t-slate-500 bg-slate-50 dark:bg-slate-900/20'
       case 'in progress': return 'border-t-blue-500 bg-blue-50 dark:bg-blue-900/20'
       case 'review': return 'border-t-amber-500 bg-amber-50 dark:bg-amber-900/20'
@@ -130,9 +129,9 @@ export default function List({ list }: ListProps) {
       <div {...handleDragProps} className="p-4 pb-2 cursor-grab active:cursor-grabbing">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            {getListIcon(list.title)}
             {!isCollapsed && (
               <>
+                {getListIcon(list.title)}
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                   {list.title}
                 </h3>

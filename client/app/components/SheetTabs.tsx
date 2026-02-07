@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, Palette } from 'lucide-react'
+import { Plus, X, Palette, Smile } from 'lucide-react'
 import { useSheetStore } from '../store/sheetStore'
 
 const colorOptions = [
@@ -14,6 +14,8 @@ const colorOptions = [
   { name: 'pink', class: 'bg-pink-500', hover: 'hover:bg-pink-600' }
 ]
 
+const iconOptions = ['💼', '🏠', '📋', '🎯', '💡', '🚀', '📊', '🎨']
+
 export default function SheetTabs() {
   const { sheets, activeSheetId, addSheet, deleteSheet, updateSheet, setActiveSheet } = useSheetStore()
   const [showAddModal, setShowAddModal] = useState(false)
@@ -21,12 +23,14 @@ export default function SheetTabs() {
   const [editingName, setEditingName] = useState('')
   const [newSheetName, setNewSheetName] = useState('')
   const [selectedColor, setSelectedColor] = useState('blue')
+  const [selectedIcon, setSelectedIcon] = useState('📋')
 
   const handleAddSheet = () => {
     if (newSheetName.trim()) {
-      addSheet(newSheetName.trim(), selectedColor)
+      addSheet(newSheetName.trim(), selectedColor, selectedIcon)
       setNewSheetName('')
       setSelectedColor('blue')
+      setSelectedIcon('📋')
       setShowAddModal(false)
     }
   }
@@ -171,6 +175,25 @@ export default function SheetTabs() {
                           selectedColor === color.name ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                         } transition-all hover:scale-105`}
                       />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <Smile className="inline w-4 h-4 mr-1" />
+                    Icon
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {iconOptions.map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={() => setSelectedIcon(icon)}
+                        className={`w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-lg ${
+                          selectedIcon === icon ? 'ring-2 ring-blue-500' : ''
+                        } transition-all`}
+                      >
+                        {icon}
+                      </button>
                     ))}
                   </div>
                 </div>
