@@ -36,7 +36,7 @@ type Task = {
 
 export default function Home() {
   const authStore = useAuthStore()
-  const { activeSheetId, getActiveSheet } = useSheetStore()
+  const { activeSheetId, getActiveSheet, loadSheets } = useSheetStore()
   const { 
     tasks, 
     lists, 
@@ -64,6 +64,7 @@ export default function Home() {
   useEffect(() => {
     if (mounted && authStore.user) {
       loadData()
+      loadSheets()
       
       // Check and move tasks every minute
       const interval = setInterval(() => {
@@ -72,7 +73,7 @@ export default function Home() {
       
       return () => clearInterval(interval)
     }
-  }, [mounted, authStore.user])
+  }, [mounted, authStore.user, loadData, loadSheets])
 
   if (!mounted || authStore.loading) {
     return (
