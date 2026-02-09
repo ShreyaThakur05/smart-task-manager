@@ -150,16 +150,17 @@ export default function SheetTabs() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
               onClick={() => setShowAddModal(false)}
             />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 w-96 z-[9999]"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 w-96 pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create New Sheet</h3>
               
               <div className="space-y-4">
@@ -212,7 +213,8 @@ export default function SheetTabs() {
                   Cancel
                 </button>
               </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
